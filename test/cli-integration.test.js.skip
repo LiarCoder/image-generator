@@ -1,0 +1,543 @@
+const { spawn } = require("child_process");
+const fs = require("fs").promises;
+const path = require("path");
+const os = require("os");
+
+/**
+ * CLI集成测试
+ * 测试完整的命令行调用流程，验证不同参数组合的正确性，测试错误场景和边界条件
+ */
+describe("CLI Integration Tests", () => {
+  let tempDir;
+  let originalCwd;
+  let canvasAvailable = false;
+
+  beforeAll(async () => {
+    // 创建临时测试目录
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "image-gen-test-"));
+    originalCwd = process.cwd();
+
+    // 检查canvas模块是否可用
+    try {
+      require("canvas");
+      canvasAvailable = true;
+    } catch (error) {
+      canvasAvailable = false;
+      console.warn("Canvas模块不可用，将跳过需要实际图片生成的测试");
+    }
+  });
+
+  afterAll(async () => {
+    // 清理临时目录
+    try {
+      await fs.rmdir(tempDir, { recursive: true });
+    } catch (error) {
+      console.warn("清理临时目录失败:", error.message);
+    }
+    process.chdir(originalCwd);
+  });
+
+  beforeEach(async () => {
+    // 每个测试前清理临时目录
+    try {
+      const files = await fs.readdir(tempDir);
+      await Promise.all(
+        files.map((file) => fs.unlink(path.join(tempDir, file)))
+      );
+    } catch (error) {
+      // 忽略清理错误
+    }
+  });
+
+  /**
+   * 执行CLI命令的辅助函数
+   * @param {string[]} args - 命令行参数
+   * @param {Object} options - 执行选项
+   * @returns {Promise<Object>} 执行结果
+   */
+  function runCLI(args, options = {}) {
+    return new Promise((resolve) => {
+      const cliPath = path.join(__dirname, "../bin/image-gen.js");
+      const child = spawn("node", [cliPath, ...args], {
+        cwd: options.cwd || tempDir,
+        stdio: ["pipe", "pipe", "pipe"],
+        ...options,
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      child.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      child.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      child.on("close", (code) => {
+        resolve({
+          code,
+          stdout,
+          stderr,
+        });
+      });
+
+      // 设置超时
+      setTimeout(() => {
+        child.kill("SIGTERM");
+        resolve({
+          code: -1,
+          stdout,
+          stderr: stderr + "\n测试超时",
+        });
+      }, 10000); // 10秒超时
+    });
+  }
+
+  /**
+   * 检查文件是否存在并获取文件信息
+   * @param {string} filePath - 文件路径
+   * @returns {Promise<Object|null>} 文件信息或null
+   */
+  async function getFileInfo(filePath) {
+    try {
+      const stats = await fs.stat(filePath);
+      return {
+        exists: true,
+        size: stats.size,
+        isFile: stats.isFile(),
+      };
+    } catch (error) {
+      return { exists: false };
+    }
+  }
+
+  describe("成功场景测试", () => {
+    test("应该成功生成基本的JPG图片", async () => {
+      if (!canvasAvailable) {
+        // 如果canvas不可用，测试应该返回错误码3并显示相应错误信息
+        const result = await runCLI(["-s", "1"]);
+
+        expect(result.code).toBe(3);
+        expect(result.stdout).toContain("开始生成图片");
+        expect(result.stdout).toContain("目标体积: 1MB");
+        expect(result.stdout).toContain("图片格式: JPG");
+        expect(result.stdout).toContain("Canvas模块错误");
+        expect(result.stdout).toContain("请安装canvas");
+        return;
+      }
+
+      const result = await runCLI(["-s", "1"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("开始生成图片");
+      expect(result.stdout).toContain("目标体积: 1MB");
+      expect(result.stdout).toContain("图片格式: JPG");
+      expect(result.stdout).toContain("图片生成完成");
+      expect(result.stderr).toBe("");
+
+      // 检查生成的文件
+      const files = await fs.readdir(tempDir);
+      const jpgFiles = files.filter((f) => f.endsWith(".jpg"));
+      expect(jpgFiles.length).toBe(1);
+
+      const fileInfo = await getFileInfo(path.join(tempDir, jpgFiles[0]));
+      expect(fileInfo.exists).toBe(true);
+      expect(fileInfo.isFile).toBe(true);
+      expect(fileInfo.size).toBeGreaterThan(0);
+    }, 15000);
+
+    test("应该成功生成PNG格式图片", async () => {
+      const result = await runCLI(["-s", "2", "-f", "png"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("图片格式: PNG");
+      expect(result.stdout).toContain("图片生成完成");
+
+      const files = await fs.readdir(tempDir);
+      const pngFiles = files.filter((f) => f.endsWith(".png"));
+      expect(pngFiles.length).toBe(1);
+    }, 15000);
+
+    test("应该成功生成自定义文件名的图片", async () => {
+      const customName = "test-image";
+      const result = await runCLI(["-s", "1", "-n", customName]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain(`文件名: ${customName}`);
+
+      const files = await fs.readdir(tempDir);
+      const customFiles = files.filter((f) => f.startsWith(customName));
+      expect(customFiles.length).toBe(1);
+      expect(customFiles[0]).toBe(`${customName}.jpg`);
+    }, 15000);
+
+    test("应该成功生成JPEG格式图片", async () => {
+      const result = await runCLI(["-s", "1", "-f", "jpeg"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("图片格式: JPEG");
+
+      const files = await fs.readdir(tempDir);
+      const jpegFiles = files.filter((f) => f.endsWith(".jpeg"));
+      expect(jpegFiles.length).toBe(1);
+    }, 15000);
+
+    test("应该支持小数体积值", async () => {
+      const result = await runCLI(["-s", "0.5"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("目标体积: 0.5MB");
+      expect(result.stdout).toContain("图片生成完成");
+    }, 15000);
+
+    test("应该支持指定输出目录", async () => {
+      const outputDir = path.join(tempDir, "output");
+      await fs.mkdir(outputDir, { recursive: true });
+
+      const result = await runCLI(["-s", "1", "-o", outputDir]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("图片生成完成");
+
+      const files = await fs.readdir(outputDir);
+      expect(files.length).toBe(1);
+      expect(files[0]).toMatch(/\.jpg$/);
+    }, 15000);
+
+    test("应该支持完整参数组合", async () => {
+      const outputDir = path.join(tempDir, "full-test");
+      await fs.mkdir(outputDir, { recursive: true });
+
+      const result = await runCLI([
+        "-s",
+        "1.5",
+        "-f",
+        "png",
+        "-n",
+        "full-test-image",
+        "-o",
+        outputDir,
+      ]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("目标体积: 1.5MB");
+      expect(result.stdout).toContain("图片格式: PNG");
+      expect(result.stdout).toContain("文件名: full-test-image");
+      expect(result.stdout).toContain("图片生成完成");
+
+      const files = await fs.readdir(outputDir);
+      expect(files).toContain("full-test-image.png");
+    }, 15000);
+
+    test("应该显示详细的生成统计信息", async () => {
+      const result = await runCLI(["-s", "2"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("📊 生成统计:");
+      expect(result.stdout).toContain("目标体积: 2MB");
+      expect(result.stdout).toContain("实际体积:");
+      expect(result.stdout).toContain("体积误差:");
+      expect(result.stdout).toContain("图片尺寸:");
+      expect(result.stdout).toContain("迭代次数:");
+      expect(result.stdout).toContain("图片格式:");
+      expect(result.stdout).toContain("文件路径:");
+    }, 15000);
+  });
+
+  describe("参数验证测试", () => {
+    test("应该拒绝缺少必需参数", async () => {
+      const result = await runCLI([]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("使用 --help 查看使用说明");
+    });
+
+    test("应该拒绝无效的体积值", async () => {
+      const result = await runCLI(["-s", "invalid"]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("无效的体积值");
+    });
+
+    test("应该拒绝零体积", async () => {
+      const result = await runCLI(["-s", "0"]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("体积必须大于0");
+    });
+
+    test("应该拒绝负体积", async () => {
+      const result = await runCLI(["-s", "-5"]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("体积必须大于0");
+    });
+
+    test("应该拒绝过大的体积", async () => {
+      const result = await runCLI(["-s", "1001"]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("体积过大");
+    });
+
+    test("应该拒绝不支持的图片格式", async () => {
+      const result = await runCLI(["-s", "1", "-f", "gif"]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("不支持的图片格式");
+    });
+
+    test("应该拒绝包含非法字符的文件名", async () => {
+      const result = await runCLI(["-s", "1", "-n", "file<name"]);
+
+      expect(result.code).toBe(2);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("文件名包含非法字符");
+    });
+
+    test("应该拒绝空文件名", async () => {
+      const result = await runCLI(["-s", "1", "-n", ""]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("文件名不能为空");
+    });
+
+    test("应该拒绝空输出目录", async () => {
+      const result = await runCLI(["-s", "1", "-o", ""]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("输出目录不能为空");
+    });
+  });
+
+  describe("边界条件测试", () => {
+    test("应该处理最小体积值", async () => {
+      const result = await runCLI(["-s", "0.1"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("目标体积: 0.1MB");
+      expect(result.stdout).toContain("图片生成完成");
+    }, 15000);
+
+    test("应该处理大体积值", async () => {
+      const result = await runCLI(["-s", "25"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("目标体积: 25MB");
+      expect(result.stdout).toContain("图片生成完成");
+    }, 30000); // 大文件需要更长时间
+
+    test("应该处理格式大小写不敏感", async () => {
+      const result = await runCLI(["-s", "1", "-f", "PNG"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("图片格式: PNG");
+
+      const files = await fs.readdir(tempDir);
+      const pngFiles = files.filter((f) => f.endsWith(".png"));
+      expect(pngFiles.length).toBe(1);
+    }, 15000);
+
+    test("应该处理文件名前后空格", async () => {
+      const result = await runCLI(["-s", "1", "-n", "  spaced-name  "]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("图片生成完成");
+
+      const files = await fs.readdir(tempDir);
+      const spacedFiles = files.filter((f) => f.startsWith("spaced-name"));
+      expect(spacedFiles.length).toBe(1);
+    }, 15000);
+
+    test("应该处理不存在的输出目录", async () => {
+      const nonExistentDir = path.join(tempDir, "non-existent");
+      const result = await runCLI(["-s", "1", "-o", nonExistentDir]);
+
+      expect(result.code).toBe(2);
+      expect(result.stderr).toContain("错误");
+    });
+
+    test("应该处理文件名冲突", async () => {
+      const fileName = "conflict-test";
+
+      // 先生成一个文件
+      const result1 = await runCLI(["-s", "1", "-n", fileName]);
+      expect(result1.code).toBe(0);
+
+      // 再生成同名文件
+      const result2 = await runCLI(["-s", "1", "-n", fileName]);
+      expect(result2.code).toBe(0);
+
+      // 应该有两个文件，第二个有数字后缀
+      const files = await fs.readdir(tempDir);
+      const conflictFiles = files.filter((f) => f.startsWith(fileName));
+      expect(conflictFiles.length).toBe(2);
+      expect(conflictFiles).toContain(`${fileName}.jpg`);
+      expect(conflictFiles.some((f) => f.match(/conflict-test-\d+\.jpg/))).toBe(
+        true
+      );
+    }, 20000);
+  });
+
+  describe("帮助和版本信息测试", () => {
+    test("应该显示帮助信息", async () => {
+      const result = await runCLI(["--help"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("生成指定体积的图片文件的命令行工具");
+      expect(result.stdout).toContain("Usage:");
+      expect(result.stdout).toContain("Options:");
+      expect(result.stdout).toContain("-s, --size");
+      expect(result.stdout).toContain("-f, --format");
+      expect(result.stdout).toContain("-n, --name");
+      expect(result.stdout).toContain("-o, --output");
+      expect(result.stdout).toContain("使用示例:");
+    });
+
+    test("应该显示版本信息", async () => {
+      const result = await runCLI(["--version"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("1.0.0");
+    });
+
+    test("应该显示短格式帮助", async () => {
+      const result = await runCLI(["-h"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("生成指定体积的图片文件的命令行工具");
+    });
+
+    test("应该显示短格式版本", async () => {
+      const result = await runCLI(["-v"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("1.0.0");
+    });
+  });
+
+  describe("错误处理测试", () => {
+    test("应该处理未知选项", async () => {
+      const result = await runCLI(["-s", "1", "--unknown-option"]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+      expect(result.stderr).toContain("使用 --help 查看使用说明");
+    });
+
+    test("应该处理缺少选项值", async () => {
+      const result = await runCLI(["-s"]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain("错误");
+    });
+
+    test("应该处理无权限的输出目录", async () => {
+      // 在Windows上创建只读目录比较复杂，这里模拟测试
+      if (process.platform !== "win32") {
+        const readOnlyDir = path.join(tempDir, "readonly");
+        await fs.mkdir(readOnlyDir);
+        await fs.chmod(readOnlyDir, 0o444); // 只读权限
+
+        const result = await runCLI(["-s", "1", "-o", readOnlyDir]);
+
+        expect(result.code).toBe(2);
+        expect(result.stderr).toContain("错误");
+
+        // 恢复权限以便清理
+        await fs.chmod(readOnlyDir, 0o755);
+      }
+    });
+  });
+
+  describe("长格式参数测试", () => {
+    test("应该支持所有长格式参数", async () => {
+      const result = await runCLI([
+        "--size",
+        "2",
+        "--format",
+        "png",
+        "--name",
+        "long-format-test",
+        "--output",
+        tempDir,
+      ]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("目标体积: 2MB");
+      expect(result.stdout).toContain("图片格式: PNG");
+      expect(result.stdout).toContain("文件名: long-format-test");
+      expect(result.stdout).toContain("图片生成完成");
+
+      const files = await fs.readdir(tempDir);
+      expect(files).toContain("long-format-test.png");
+    }, 15000);
+
+    test("应该支持混合短长格式参数", async () => {
+      const result = await runCLI([
+        "-s",
+        "1",
+        "--format",
+        "jpeg",
+        "-n",
+        "mixed-format",
+        "--output",
+        tempDir,
+      ]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("图片生成完成");
+
+      const files = await fs.readdir(tempDir);
+      expect(files).toContain("mixed-format.jpeg");
+    }, 15000);
+  });
+
+  describe("输出格式测试", () => {
+    test("应该包含所有必需的输出信息", async () => {
+      const result = await runCLI(["-s", "3", "-n", "output-test"]);
+
+      expect(result.code).toBe(0);
+
+      // 检查启动信息
+      expect(result.stdout).toContain("🚀 开始生成图片");
+      expect(result.stdout).toContain("目标体积: 3MB");
+      expect(result.stdout).toContain("图片格式: JPG");
+      expect(result.stdout).toContain("文件名: output-test");
+
+      // 检查进度信息
+      expect(result.stdout).toContain("⏳");
+
+      // 检查成功信息
+      expect(result.stdout).toContain("✅ 成功:");
+      expect(result.stdout).toContain("图片生成完成");
+
+      // 检查统计信息
+      expect(result.stdout).toContain("📊 生成统计:");
+      expect(result.stdout).toContain("目标体积:");
+      expect(result.stdout).toContain("实际体积:");
+      expect(result.stdout).toContain("体积误差:");
+      expect(result.stdout).toContain("图片尺寸:");
+      expect(result.stdout).toContain("迭代次数:");
+      expect(result.stdout).toContain("文件路径:");
+    }, 15000);
+
+    test("应该正确显示文件路径", async () => {
+      const result = await runCLI(["-s", "1", "-n", "path-test"]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("文件路径:");
+      expect(result.stdout).toContain("path-test.jpg");
+    }, 15000);
+  });
+});

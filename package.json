@@ -1,0 +1,35 @@
+{
+  "name": "image-generator",
+  "version": "1.0.0",
+  "description": "A Node.js command-line tool for generating images with specified file sizes",
+  "main": "src/index.js",
+  "bin": {
+    "image-gen": "./bin/image-gen.js"
+  },
+  "scripts": {
+    "start": "node bin/image-gen.js",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [
+    "image",
+    "generator",
+    "cli",
+    "canvas",
+    "nodejs"
+  ],
+  "author": "liaw",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "jimp": "^0.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "jest": "^29.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
