@@ -112,7 +112,7 @@ img-generator/
 │   ├── imageGenerator.js  # 图片生成核心逻辑
 │   ├── fileUtils.js  # 文件操作工具
 │   └── utils.js      # 通用工具函数
-├── test/             # 测试文件目录
+├── __test__/         # 测试文件目录
 ├── test-output/      # 测试输出目录
 ├── examples/         # 示例目录
 └── package.json      # 项目配置
