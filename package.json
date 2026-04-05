@@ -1,11 +1,35 @@
 {
   "name": "image-generator",
   "version": "2.0.0",
-  "description": "",
-  "scripts": {},
-  "keywords": [],
+  "description": "CLI tool to generate images with a precise target file size",
+  "type": "module",
+  "bin": {
+    "imgen": "./bin/imgen.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "node --test test/**/*.test.js"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "keywords": [
+    "cli",
+    "image",
+    "generator",
+    "placeholder"
+  ],
   "author": "liaw",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "chalk": "^5.0.0",
+    "commander": "^12.0.0",
+    "ora": "^8.0.0",
+    "sharp": "^0.33.0"
+  },
   "devDependencies": {}
 }
