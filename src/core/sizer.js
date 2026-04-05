@@ -57,6 +57,8 @@ export function calculate(targetBytes, format) {
  */
 export function parseDimensions(dimensionStr) {
   const m = dimensionStr.match(DIMENSIONS_RE);
-  if (!m) throw new Error(`Invalid dimensions string: "${dimensionStr}"`);
+  if (!m) {
+    throw new Error(`Invalid dimensions string: "${dimensionStr}"`);
+  }
   return { width: parseInt(m[1], 10), height: parseInt(m[2], 10) };
 }

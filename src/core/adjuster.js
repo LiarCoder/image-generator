@@ -168,7 +168,9 @@ async function adjustLossyFinal(targetBytes, format, width, height, bgColor, tex
     } else {
       high = mid - 1;
     }
-    if (low > high) break;
+    if (low > high) {
+      break;
+    }
   }
 
   return { buffer: bestBuffer, width, height };
@@ -218,7 +220,9 @@ async function adjustLossless(
  */
 function padBuffer(buf, targetBytes, format) {
   const needed = targetBytes - buf.length;
-  if (needed <= 0) return buf;
+  if (needed <= 0) {
+    return buf;
+  }
 
   if (format === 'png') {
     return padPng(buf, needed);

@@ -46,7 +46,9 @@ class Logger {
    * @returns {void}
    */
   start(text) {
-    if (this.mode === 'quiet') return;
+    if (this.mode === 'quiet') {
+      return;
+    }
     this.startTime = Date.now();
     this.spinner = ora({ text, color: 'cyan' }).start();
   }
@@ -58,7 +60,9 @@ class Logger {
    * @returns {void}
    */
   updateSpinner(text) {
-    if (this.mode === 'quiet' || !this.spinner) return;
+    if (this.mode === 'quiet' || !this.spinner) {
+      return;
+    }
     this.spinner.text = text;
   }
 
@@ -130,7 +134,9 @@ class Logger {
    * @returns {void}
    */
   warn(message) {
-    if (this.mode === 'quiet') return;
+    if (this.mode === 'quiet') {
+      return;
+    }
     this.stopSpinner();
     console.warn(chalk.yellow(`⚠️  Warning: ${message}`));
     // restart spinner if it was running
@@ -143,7 +149,9 @@ class Logger {
    * @returns {void}
    */
   debug(message) {
-    if (this.mode !== 'verbose') return;
+    if (this.mode !== 'verbose') {
+      return;
+    }
     console.log(chalk.gray(`   [debug] ${message}`));
   }
 }

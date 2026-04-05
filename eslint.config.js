@@ -21,4 +21,11 @@ export default [
     },
   },
   eslintConfigPrettier,
+  // Prettier disables `curly` by default; re-enable after it — compatible with Prettier when using "all".
+  {
+    files: ['**/*.js'],
+    rules: {
+      curly: ['error', 'all'],
+    },
+  },
 ];

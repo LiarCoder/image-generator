@@ -93,8 +93,11 @@ export function run() {
   }
 
   // ── Set log mode early so subsequent errors respect it ───────────────────
-  if (opts.verbose) logger.setMode('verbose');
-  else if (opts.quiet) logger.setMode('quiet');
+  if (opts.verbose) {
+    logger.setMode('verbose');
+  } else if (opts.quiet) {
+    logger.setMode('quiet');
+  }
 
   // ── -f / --format ────────────────────────────────────────────────────────
   const format = opts.format.toLowerCase();
