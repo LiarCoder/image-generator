@@ -1,0 +1,380 @@
+/**
+ * adjuster.js — Precisely adjust image buffer size to match a target byte count.
+ *
+ * Strategies:
+ *  - Lossless formats (PNG / GIF): pad with a metadata chunk if too small;
+ *    scale down dimensions if too large.
+ *  - No-compression formats (BMP): exact pixel count is computable, so we
+ *    resize directly to the nearest valid size.
+ *  - Lossy formats (JPG / WEBP): binary-search over quality parameter;
+ *    if quality headroom is exhausted, scale up image dimensions.
+ */
+
+import sharp from "sharp";
+import { render, rawToBmp } from "./renderer.js";
+import {
+  TOLERANCE,
+  BINARY_SEARCH_MAX_ITERATIONS,
+  MIN_DIMENSION,
+} from "./constants.js";
+import * as logger from "./logger.js";
+
+const LOSSLESS = new Set(["png", "gif", "bmp"]);
+const LOSSY = new Set(["jpg", "webp"]);
+
+/**
+ * @param {Buffer} baseBuffer   - initial rendered image buffer
+ * @param {number} targetBytes
+ * @param {string} format
+ * @param {number} width
+ * @param {number} height
+ * @param {string} bgColor
+ * @param {string} textColor
+ * @param {{ line1:string, line2:string, line3?:string }} lines
+ * @returns {Promise<{ buffer: Buffer, width: number, height: number }>}
+ */
+export async function adjust(
+  baseBuffer,
+  targetBytes,
+  format,
+  width,
+  height,
+  bgColor,
+  textColor,
+  lines,
+) {
+  if (LOSSY.has(format)) {
+    return adjustLossy(
+      targetBytes,
+      format,
+      width,
+      height,
+      bgColor,
+      textColor,
+      lines,
+    );
+  }
+  return adjustLossless(
+    baseBuffer,
+    targetBytes,
+    format,
+    width,
+    height,
+    bgColor,
+    textColor,
+    lines,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lossy (JPG / WEBP) — binary search over quality
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function adjustLossy(
+  targetBytes,
+  format,
+  width,
+  height,
+  bgColor,
+  textColor,
+  lines,
+) {
+  let low = 1,
+    high = 100;
+  let bestBuffer = null;
+  let bestDiff = Infinity;
+  let iterations = 0;
+
+  while (low <= high && iterations < BINARY_SEARCH_MAX_ITERATIONS) {
+    const mid = Math.floor((low + high) / 2);
+    const buf = await render(
+      width,
+      height,
+      bgColor,
+      textColor,
+      lines,
+      format,
+      mid,
+    );
+    const diff = Math.abs(buf.length - targetBytes);
+
+    logger.debug(
+      `质量调整 [${iterations + 1}/${BINARY_SEARCH_MAX_ITERATIONS}] quality=${mid} size=${buf.length} diff=${diff}`,
+    );
+
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestBuffer = buf;
+    }
+
+    if (buf.length < targetBytes) {
+      low = mid + 1; // need larger file → increase quality
+    } else {
+      high = mid - 1; // need smaller file → decrease quality
+    }
+    iterations++;
+  }
+
+  // If quality=100 and still too small, we need a larger canvas
+  const tolerance = Math.max(
+    targetBytes * TOLERANCE.lossy.percentage,
+    TOLERANCE.lossy.absolute,
+  );
+
+  if (bestDiff > tolerance) {
+    logger.debug(`体积误差 ${bestDiff} bytes 超过容差，尝试扩大画布...`);
+    return scaleAndAdjustLossy(
+      targetBytes,
+      format,
+      width,
+      height,
+      bgColor,
+      textColor,
+      lines,
+    );
+  }
+
+  return { buffer: bestBuffer, width, height };
+}
+
+async function scaleAndAdjustLossy(
+  targetBytes,
+  format,
+  width,
+  height,
+  bgColor,
+  textColor,
+  lines,
+) {
+  // Scale up by ~20% and retry once
+  const newWidth = Math.round(width * 1.2);
+  const newHeight = Math.round(height * 1.2);
+  const updatedLines = {
+    ...lines,
+    line3: `${newWidth} \u00d7 ${newHeight}`,
+  };
+  logger.debug(`扩大画布至 ${newWidth}×${newHeight} 后重试质量调整`);
+  return adjustLossy(
+    targetBytes,
+    format,
+    newWidth,
+    newHeight,
+    bgColor,
+    textColor,
+    updatedLines,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lossless (PNG / GIF / BMP)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function adjustLossless(
+  baseBuffer,
+  targetBytes,
+  format,
+  width,
+  height,
+  bgColor,
+  textColor,
+  lines,
+) {
+  const currentSize = baseBuffer.length;
+  const tolerance = TOLERANCE.lossless;
+
+  if (Math.abs(currentSize - targetBytes) <= tolerance) {
+    return { buffer: baseBuffer, width, height };
+  }
+
+  if (currentSize < targetBytes) {
+    // Need to grow: pad with metadata
+    const padded = padBuffer(baseBuffer, targetBytes, format);
+    return { buffer: padded, width, height };
+  }
+
+  // Need to shrink: scale down dimensions and re-render
+  return shrinkAndRender(
+    targetBytes,
+    format,
+    width,
+    height,
+    bgColor,
+    textColor,
+    lines,
+  );
+}
+
+/**
+ * Append padding bytes to reach targetBytes.
+ * - PNG: append a harmless tEXt chunk "Comment: <padding>"
+ * - GIF: append comment extension blocks
+ * - BMP: extend the pixel data area (BMP ignores trailing data)
+ *
+ * @param {Buffer} buf
+ * @param {number} targetBytes
+ * @param {string} format
+ * @returns {Buffer}
+ */
+function padBuffer(buf, targetBytes, format) {
+  const needed = targetBytes - buf.length;
+  if (needed <= 0) return buf;
+
+  if (format === "png") {
+    return padPng(buf, needed);
+  }
+  if (format === "gif") {
+    return padGif(buf, needed);
+  }
+  if (format === "bmp") {
+    // Simply append zero bytes after the BMP data; BMP readers ignore trailing data
+    const padding = Buffer.alloc(needed, 0);
+    return Buffer.concat([buf, padding]);
+  }
+
+  // Fallback: raw append
+  const padding = Buffer.alloc(needed, 0);
+  return Buffer.concat([buf, padding]);
+}
+
+/**
+ * Inject a PNG tEXt chunk filled with padding data to reach the target size.
+ */
+function padPng(buf, neededBytes) {
+  // A PNG tEXt chunk: length(4) + 'tEXt'(4) + data + CRC(4) = 12 + dataLength
+  // We need to fill `neededBytes` total, so dataLength = neededBytes - 12
+  if (neededBytes < 12) {
+    // Too small for a valid chunk — just append raw bytes
+    return Buffer.concat([buf, Buffer.alloc(neededBytes, 0)]);
+  }
+
+  const dataLength = neededBytes - 12;
+  const chunk = Buffer.alloc(neededBytes, 0);
+
+  // Length (big-endian)
+  chunk.writeUInt32BE(dataLength, 0);
+
+  // Chunk type "tEXt"
+  chunk.write("tEXt", 4, "ascii");
+
+  // Data: keyword "Comment\0" + padding zeros
+  const keyword = "Comment\0";
+  chunk.write(keyword, 8, "ascii");
+  // Rest is already zeroed
+
+  // CRC-32 over type + data (positions 4..8+dataLength)
+  const crc = crc32(chunk.slice(4, 8 + dataLength));
+  chunk.writeUInt32BE(crc, 8 + dataLength);
+
+  // Insert just before the PNG IEND chunk (last 12 bytes)
+  const iendPos = buf.length - 12;
+  return Buffer.concat([buf.slice(0, iendPos), chunk, buf.slice(iendPos)]);
+}
+
+/**
+ * Append a GIF comment extension block as padding.
+ */
+function padGif(buf, neededBytes) {
+  // GIF comment extension: 0x21 0xFE, then sub-blocks (max 255 bytes each), then 0x00
+  // Each sub-block: length(1) + data
+  const blocks = [];
+  let remaining = neededBytes - 3; // -3 for header(2) + terminator(1)
+
+  if (remaining <= 0) {
+    return Buffer.concat([
+      buf.slice(0, buf.length - 1), // remove trailing 0x3B (GIF trailer)
+      Buffer.from([0x21, 0xfe, 0x00, 0x3b]),
+    ]);
+  }
+
+  while (remaining > 0) {
+    const blockSize = Math.min(255, remaining);
+    blocks.push(Buffer.from([blockSize]));
+    blocks.push(Buffer.alloc(blockSize, 0x20)); // space chars
+    remaining -= blockSize;
+  }
+
+  const extension = Buffer.concat([
+    Buffer.from([0x21, 0xfe]), // comment extension header
+    ...blocks,
+    Buffer.from([0x00]), // block terminator
+  ]);
+
+  // Insert before GIF trailer (0x3B)
+  return Buffer.concat([
+    buf.slice(0, buf.length - 1),
+    extension,
+    Buffer.from([0x3b]),
+  ]);
+}
+
+/**
+ * Iteratively shrink image dimensions until the rendered output fits within
+ * targetBytes (within tolerance).
+ */
+async function shrinkAndRender(
+  targetBytes,
+  format,
+  width,
+  height,
+  bgColor,
+  textColor,
+  lines,
+) {
+  let w = width;
+  let h = height;
+  let lastBuffer = null;
+  const tolerance = TOLERANCE.lossless;
+
+  for (let i = 0; i < 10; i++) {
+    // Estimate scale factor: current > target, so reduce proportionally
+    const current = lastBuffer?.length ?? w * h * 3;
+    const scale = Math.sqrt(targetBytes / current) * 0.97; // 3% safety margin
+    w = Math.max(MIN_DIMENSION, Math.round(w * scale));
+    h = Math.max(MIN_DIMENSION, Math.round(h * scale));
+
+    const updatedLines = { ...lines, line3: `${w} \u00d7 ${h}` };
+    const buf = await render(w, h, bgColor, textColor, updatedLines, format);
+    logger.debug(
+      `缩小画布至 ${w}×${h}，大小=${buf.length}，目标=${targetBytes}`,
+    );
+
+    if (Math.abs(buf.length - targetBytes) <= tolerance) {
+      return { buffer: buf, width: w, height: h };
+    }
+
+    if (buf.length <= targetBytes) {
+      // Now too small — pad it
+      const padded = padBuffer(buf, targetBytes, format);
+      return { buffer: padded, width: w, height: h };
+    }
+
+    lastBuffer = buf;
+  }
+
+  // Best effort: return whatever we have
+  return { buffer: lastBuffer, width: w, height: h };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CRC-32 (needed for PNG chunk integrity)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    t[n] = c;
+  }
+  return t;
+})();
+
+function crc32(buf) {
+  let crc = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) {
+    crc = CRC_TABLE[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
