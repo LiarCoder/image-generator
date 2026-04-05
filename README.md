@@ -35,20 +35,20 @@ imgen -s <size> [options]
 
 ### Options
 
-| Flag | Alias | Description | Default |
-|------|-------|-------------|---------|
-| `-s <number>` | `--size` | Target file size **(required)** | — |
-| `-u <unit>` | `--unit` | Unit: `KB` or `MB` | `MB` |
-| `-f <type>` | `--format` | Output format: `png` `jpg` `webp` `bmp` `gif` | `png` |
-| `-n <name>` | `--name` | Output filename (no extension) | auto-generated |
-| `-o <dir>` | `--output` | Output directory | current directory |
-| `-d <WxH>` | `--dimensions` | Pixel dimensions, e.g. `1920x1080` | auto-calculated |
-| `--bg-color <hex>` | | Background color, e.g. `#336699` | random muted color |
-| `--text-color <hex>` | | Text color, e.g. `#FFFFFF` | auto WCAG contrast |
-| `--verbose` | | Show detailed progress | — |
-| `--quiet` | | Print only the output file path | — |
-| `-v` | `--version` | Show version | — |
-| `-h` | `--help` | Show help | — |
+| Flag                 | Alias          | Description                                   | Default            |
+| -------------------- | -------------- | --------------------------------------------- | ------------------ |
+| `-s <number>`        | `--size`       | Target file size **(required)**               | —                  |
+| `-u <unit>`          | `--unit`       | Unit: `KB` or `MB`                            | `MB`               |
+| `-f <type>`          | `--format`     | Output format: `png` `jpg` `webp` `bmp` `gif` | `png`              |
+| `-n <name>`          | `--name`       | Output filename (no extension)                | auto-generated     |
+| `-o <dir>`           | `--output`     | Output directory                              | current directory  |
+| `-d <WxH>`           | `--dimensions` | Pixel dimensions, e.g. `1920x1080`            | auto-calculated    |
+| `--bg-color <hex>`   |                | Background color, e.g. `#336699`              | random muted color |
+| `--text-color <hex>` |                | Text color, e.g. `#FFFFFF`                    | auto WCAG contrast |
+| `--verbose`          |                | Show detailed progress                        | —                  |
+| `--quiet`            |                | Print only the output file path               | —                  |
+| `-v`                 | `--version`    | Show version                                  | —                  |
+| `-h`                 | `--help`       | Show help                                     | —                  |
 
 `--verbose` and `--quiet` are mutually exclusive.
 
@@ -122,13 +122,13 @@ For example: `5MB-2026-04-05-14-30-00.png`
 
 ## Precision guarantees
 
-| Format | Tolerance |
-|--------|-----------|
-| PNG | Exact (±0 bytes via tEXt chunk padding) |
-| GIF | ±1 KB (via comment extension block padding) |
-| BMP | Exact (trailing zero bytes appended) |
-| JPG | ±1% or ±5 KB, whichever is larger |
-| WEBP | ±1% or ±5 KB, whichever is larger |
+| Format | Tolerance                                   |
+| ------ | ------------------------------------------- |
+| PNG    | Exact (±0 bytes via tEXt chunk padding)     |
+| GIF    | ±1 KB (via comment extension block padding) |
+| BMP    | Exact (trailing zero bytes appended)        |
+| JPG    | ±1% or ±5 KB, whichever is larger           |
+| WEBP   | ±1% or ±5 KB, whichever is larger           |
 
 If a dimension constraint makes the exact target unreachable, `imgen` warns
 and saves the closest achievable file.
