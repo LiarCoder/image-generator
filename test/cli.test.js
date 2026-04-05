@@ -1,4 +1,7 @@
-import { describe, it, mock, afterEach } from "node:test";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 /**
@@ -12,6 +15,32 @@ const DIMENSIONS_RE = /^(\d+)x(\d+)$/i;
 const ILLEGAL_FILENAME_RE = /[\\/:*?"<>|]/;
 const SUPPORTED_FORMATS = ["jpg", "png", "gif", "bmp", "webp"];
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+
+const testDir = dirname(fileURLToPath(import.meta.url));
+const imgenBin = join(testDir, "..", "bin", "imgen.js");
+
+function runImgen(args = []) {
+  return spawnSync(process.execPath, [imgenBin, ...args], {
+    encoding: "utf8",
+    windowsHide: true,
+  });
+}
+
+describe("CLI run", () => {
+  it("prints help and exits 0 when no arguments (missing --size)", () => {
+    const r = runImgen([]);
+    assert.equal(r.status, 0);
+    assert.match(r.stdout, /Usage:\s+imgen/i);
+    assert.match(r.stdout, /--size/);
+  });
+
+  it("prints help and exits 0 when --size is omitted with other options", () => {
+    const r = runImgen(["-f", "png", "-u", "KB"]);
+    assert.equal(r.status, 0);
+    assert.match(r.stdout, /Usage:\s+imgen/i);
+    assert.match(r.stdout, /--size/);
+  });
+});
 
 describe("CLI validators", () => {
   describe("format validation", () => {

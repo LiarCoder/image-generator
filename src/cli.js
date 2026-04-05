@@ -40,7 +40,7 @@ export function run() {
       `图片格式：${SUPPORTED_FORMATS.join(" | ")}`,
       DEFAULT_FORMAT,
     )
-    .requiredOption("-s, --size <number>", "目标文件体积（正数）")
+    .option("-s, --size <number>", "目标文件体积（正数）")
     .option("-u, --unit <unit>", `体积单位：KB | MB`, DEFAULT_UNIT)
     .option("-n, --name <string>", "文件名（不含扩展名）")
     .option("-o, --output <dir>", "输出目录（默认：当前目录）", process.cwd())
@@ -52,6 +52,11 @@ export function run() {
 
   program.parse(process.argv);
   const opts = program.opts();
+
+  // ── No arguments: show help ──────────────────────────────────────────────
+  if (!opts.size) {
+    program.help();
+  }
 
   // ── Mutually exclusive flags ─────────────────────────────────────────────
   if (opts.verbose && opts.quiet) {
