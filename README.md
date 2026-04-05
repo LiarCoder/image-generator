@@ -1,5 +1,7 @@
 # imgen
 
+English | [简体中文](./README-zh_cn.md)
+
 CLI tool that generates images with a **precise target file size**.
 
 Supported formats: **PNG · JPG · WEBP · BMP · GIF**
@@ -138,11 +140,20 @@ and saves the closest achievable file.
 ## Development
 
 ```bash
+# Install dependencies
+npm install
+
 # Run all tests
 npm test
 
 # Run a single test file
 node --test test/adjuster.test.js
+
+# Run locally without global install
+node bin/imgen.js -s 1 -f png
+
+# Run with verbose output for debugging
+node bin/imgen.js -s 2 -f jpg --verbose
 ```
 
 ### Project layout

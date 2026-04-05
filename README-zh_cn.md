@@ -1,5 +1,7 @@
 # imgen
 
+[English](./README.md) | 简体中文
+
 一个可以生成**精确目标文件大小**的命令行工具。
 
 支持的格式：**PNG · JPG · WEBP · BMP · GIF**
@@ -133,11 +135,20 @@ imgen -s 3 -f jpg --verbose
 ## 开发
 
 ```bash
+# 安装依赖
+npm install
+
 # 运行所有测试
 npm test
 
 # 运行单个测试文件
 node --test test/adjuster.test.js
+
+# 本地运行（无需全局安装）
+node bin/imgen.js -s 1 -f png
+
+# 使用详细输出进行调试
+node bin/imgen.js -s 2 -f jpg --verbose
 ```
 
 ### 项目结构
