@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/%40liarcoder%2Fimage-generator.svg)](https://www.npmjs.com/package/@liarcoder/image-generator)
 
-[English](./README-en_us.md) | 简体中文
+[English](./docs/README-en_us.md) | 简体中文 | [更新日志](./CHANGELOG.md)
 
 一个可以生成**精确目标文件大小**的命令行工具。
 
@@ -41,7 +41,7 @@ npx @liarcoder/image-generator
 ```bash
 # 克隆仓库并安装依赖
 git clone <repo-url>
-cd img-generator
+cd image-generator
 npm install
 
 # 将命令添加到全局
@@ -229,6 +229,12 @@ test/
   color.test.js
   adjuster.test.js
 ```
+
+---
+
+## 更新日志
+
+详见 [CHANGELOG.md](./CHANGELOG.md)。英文版见 [docs/CHANGELOG-en_us.md](./docs/CHANGELOG-en_us.md)。
 
 ---
 
