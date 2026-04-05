@@ -10,6 +10,15 @@ export const DEFAULT_ASPECT_RATIO = 4 / 3;
 export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 export const MIN_DIMENSION = 100;
 
+/** Hex color: #RGB or #RRGGBB */
+export const HEX_COLOR_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+/** WxH pixel dimensions string */
+export const DIMENSIONS_RE = /^(\d+)x(\d+)$/i;
+
+/** Windows and POSIX illegal filename characters */
+export const ILLEGAL_FILENAME_RE = /[\\/:*?"<>|]/;
+
 export const TOLERANCE = {
   /** ±1 KB for lossless formats: PNG / BMP / GIF */
   lossless: 1024,
