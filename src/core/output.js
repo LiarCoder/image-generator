@@ -46,6 +46,76 @@ function nextAvailablePath(dir, base, ext) {
 }
 
 /**
+ * Ensure output directory exists.
+ *
+ * @param {string} absDir
+ * @returns {void}
+ */
+function ensureOutputDir(absDir) {
+  if (existsSync(absDir)) {
+    return;
+  }
+
+  try {
+    mkdirSync(absDir, { recursive: true });
+  } catch {
+    logger.error(`Failed to create output directory "${absDir}"`, EXIT_CODES.FILE_ERROR);
+  }
+}
+
+/**
+ * Ask user how to handle filename collision in interactive mode.
+ *
+ * @param {string} baseName
+ * @param {string} format
+ * @returns {Promise<'append'|'overwrite'|'cancel'>}
+ */
+async function askCollisionAction(baseName, format) {
+  return select({
+    message: `File "${baseName}.${format}" already exists. Choose an action:`,
+    choices: [
+      {
+        name: `Append suffix (e.g. ${baseName}-1.${format})`,
+        value: 'append',
+      },
+      { name: 'Overwrite existing file', value: 'overwrite' },
+      { name: 'Cancel', value: 'cancel' },
+    ],
+    default: 'append',
+  });
+}
+
+/**
+ * Resolve target file path when initial path collides.
+ *
+ * @param {string} initialPath
+ * @param {string} absDir
+ * @param {string} baseName
+ * @param {string} format
+ * @returns {Promise<string>}
+ */
+async function resolveTargetPath(initialPath, absDir, baseName, format) {
+  if (!existsSync(initialPath)) {
+    return initialPath;
+  }
+
+  if (logger.getMode() === 'quiet') {
+    return nextAvailablePath(absDir, baseName, format);
+  }
+
+  const choice = await askCollisionAction(baseName, format);
+  if (choice === 'cancel') {
+    logger.error('Operation cancelled', EXIT_CODES.SUCCESS);
+  }
+  if (choice === 'append') {
+    return nextAvailablePath(absDir, baseName, format);
+  }
+
+  // overwrite
+  return initialPath;
+}
+
+/**
  * Save `buffer` to disk, handling filename collisions interactively.
  *
  * @param {Buffer} buffer
@@ -63,49 +133,15 @@ export async function save(buffer, options) {
 
   // 1. Resolve output directory
   const absDir = resolve(outputDir);
-  if (!existsSync(absDir)) {
-    try {
-      mkdirSync(absDir, { recursive: true });
-    } catch {
-      logger.error(`Failed to create output directory "${absDir}"`, EXIT_CODES.FILE_ERROR);
-    }
-  }
+  ensureOutputDir(absDir);
 
   // 2. Determine base filename (without extension)
-  const baseName = name ?? buildDefaultName(size, unit, format).replace(`.${format}`, '');
+  const defaultName = buildDefaultName(size, unit, format);
+  const baseName = name ?? defaultName.slice(0, -`.${format}`.length);
   const initialPath = join(absDir, `${baseName}.${format}`);
 
   // 3. Handle collision
-  let targetPath = initialPath;
-  if (existsSync(initialPath)) {
-    const isQuiet = logger.getMode() === 'quiet';
-
-    if (isQuiet) {
-      // In quiet mode: silently append sequence number
-      targetPath = nextAvailablePath(absDir, baseName, format);
-    } else {
-      // Interactive prompt
-      const choice = await select({
-        message: `File "${baseName}.${format}" already exists. Choose an action:`,
-        choices: [
-          {
-            name: `Append suffix (e.g. ${baseName}-1.${format})`,
-            value: 'append',
-          },
-          { name: 'Overwrite existing file', value: 'overwrite' },
-          { name: 'Cancel', value: 'cancel' },
-        ],
-        default: 'append',
-      });
-
-      if (choice === 'cancel') {
-        logger.error('Operation cancelled', EXIT_CODES.SUCCESS);
-      } else if (choice === 'append') {
-        targetPath = nextAvailablePath(absDir, baseName, format);
-      }
-      // 'overwrite' keeps targetPath = initialPath
-    }
-  }
+  const targetPath = await resolveTargetPath(initialPath, absDir, baseName, format);
 
   // 4. Write file
   try {
