@@ -9,6 +9,7 @@ import {
   HEX_COLOR_RE,
   DIMENSIONS_RE,
   ILLEGAL_FILENAME_RE,
+  EXIT_CODES,
 } from '../src/constants/index.js';
 
 /**
@@ -40,6 +41,69 @@ describe('CLI run', () => {
     assert.equal(r.status, 0);
     assert.match(r.stdout, /Usage:\s+imgen/i);
     assert.match(r.stdout, /--size/);
+  });
+
+  it('prints version and exits 0 with -v', () => {
+    const r = runImgen(['-v']);
+    assert.equal(r.status, 0);
+    assert.match(r.stdout, /\d+\.\d+\.\d+/);
+  });
+});
+
+describe('CLI parameter errors', () => {
+  it('exits PARAM_ERROR for unsupported format', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '-f', 'tiff']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR for non-positive size', () => {
+    const r = runImgen(['-s', '0', '-u', 'KB']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR for invalid numeric size', () => {
+    const r = runImgen(['-s', 'abc', '-u', 'KB']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR for unsupported unit', () => {
+    const r = runImgen(['-s', '1', '-u', 'GB']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR when target exceeds max file size', () => {
+    const r = runImgen(['-s', '51', '-u', 'MB']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR for illegal filename characters', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '-n', 'bad/name']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR for invalid --dimensions pattern', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '-d', '1920-1080']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR for non-positive dimensions', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '-d', '0x100']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR for invalid --bg-color', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '--bg-color', 'red']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR for invalid --text-color', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '--text-color', 'rgb(0,0,0)']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR when --verbose and --quiet are both set', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '--verbose', '--quiet']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
   });
 });
 

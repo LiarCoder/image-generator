@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { render, buildNoiseLayer } from '../src/core/renderer.js';
+import { render, buildNoiseLayer, applyFormat, rawToBmp } from '../src/core/renderer.js';
 
 const BG = '#4a607a';
 const TEXT = '#f0f0f0';
@@ -80,6 +80,39 @@ describe('renderer', () => {
       const a = await render(400, 300, BG, TEXT, LINES, 'jpg', 80, noise);
       const b = await render(400, 300, BG, TEXT, LINES, 'jpg', 80, noise);
       assert.deepEqual(a, b, 'same noise + same quality should yield identical output');
+    });
+
+    it('rejects unsupported format', async () => {
+      await assert.rejects(() => render(8, 8, BG, TEXT, LINES, 'tiff'), /Unsupported format/);
+    });
+  });
+
+  describe('applyFormat()', () => {
+    it('throws for unsupported format', () => {
+      const pipeline = sharp({
+        create: { width: 2, height: 2, channels: 3, background: { r: 1, g: 2, b: 3 } },
+      });
+      assert.throws(() => applyFormat(pipeline, 'unknown', 80), /Unsupported format/);
+    });
+  });
+
+  describe('rawToBmp()', () => {
+    it('wraps sharp raw RGB into a BMP with consistent header and size', async () => {
+      const w = 7;
+      const h = 5;
+      const raw = await sharp({
+        create: { width: w, height: h, channels: 3, background: { r: 11, g: 22, b: 33 } },
+      })
+        .raw()
+        .toBuffer();
+      assert.equal(raw.length, w * h * 3);
+
+      const bmp = rawToBmp(raw, w, h);
+      assert.equal(bmp.toString('ascii', 0, 2), 'BM');
+      assert.equal(bmp.readUInt32LE(2), bmp.length);
+      assert.equal(bmp.readUInt32LE(10), 54);
+      assert.equal(bmp.readUInt32LE(18), w);
+      assert.equal(Math.abs(bmp.readInt32LE(22)), h);
     });
   });
 });

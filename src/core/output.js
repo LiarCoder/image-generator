@@ -152,3 +152,5 @@ export async function save(buffer, options) {
 
   return resolve(targetPath);
 }
+
+export { buildDefaultName, nextAvailablePath };

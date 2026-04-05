@@ -118,3 +118,5 @@ export async function generate(options) {
   // 8. Done
   logger.success(filePath, finalBuffer.length, finalWidth, finalHeight);
 }
+
+export { buildDisplayName, buildOverlayLines, getToleranceBytes };

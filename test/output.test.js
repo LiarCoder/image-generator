@@ -1,42 +1,12 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, rmSync, existsSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import { buildDefaultName, nextAvailablePath } from '../src/core/output.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TMP = join(__dirname, '..', 'temp', 'output-test-tmp');
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Re-implement the private helpers here so we can unit-test them without
- * spawning a process.  Keep in sync with src/core/output.js.
- */
-function buildDefaultName(size, unit, format) {
-  const now = new Date();
-  const pad = (n, len = 2) => String(n).padStart(len, '0');
-  const ts = [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-    pad(now.getHours()),
-    pad(now.getMinutes()),
-    pad(now.getSeconds()),
-  ].join('-');
-  return `${size}${unit}-${ts}.${format}`;
-}
-
-function nextAvailablePath(dir, base, ext) {
-  let counter = 1;
-  let candidate;
-  do {
-    candidate = join(dir, `${base}-${counter}.${ext}`);
-    counter++;
-  } while (existsSync(candidate));
-  return candidate;
-}
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
