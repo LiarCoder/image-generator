@@ -1,102 +1,99 @@
 # imgen
 
-English | [简体中文](./README-zh_cn.md)
+[English](./README.md) | 简体中文
 
-CLI tool that generates images with a **precise target file size**.
+一个可以生成**精确目标文件大小**的命令行工具。
 
-Supported formats: **PNG · JPG · WEBP · BMP · GIF**
+支持的格式：**PNG · JPG · WEBP · BMP · GIF**
 
-Each image is filled with a random muted background color, an auto-contrast
-text overlay showing the filename, target size, and pixel dimensions, and
-(for lossy formats) a subtle noise layer that allows the JPEG/WEBP encoder to
-hit the requested byte count accurately via quality-parameter binary search.
+每张图片都会填充随机柔和的背景色、自动对比度的文字叠加层（显示文件名、目标大小和像素尺寸），以及（针对有损格式）一层微妙的噪点，使 JPEG/WEBP 编码器能够通过质量参数二分搜索精确命中目标字节数。
 
 ---
 
-## Requirements
+## 环境要求
 
 - Node.js **≥ 18**
 
-## Installation
+## 安装
 
 ```bash
-# Clone and install dependencies
+# 克隆仓库并安装依赖
 git clone <repo-url>
 cd img-generator
 npm install
 
-# Make the command available globally
+# 将命令添加到全局
 npm link
 ```
 
-## Usage
+## 使用方法
 
 ```
 imgen -s <size> [options]
 ```
 
-### Options
+### 选项
 
-| Flag                 | Alias          | Description                                   | Default            |
-| -------------------- | -------------- | --------------------------------------------- | ------------------ |
-| `-s <number>`        | `--size`       | Target file size **(required)**               | —                  |
-| `-u <unit>`          | `--unit`       | Unit: `KB` or `MB`                            | `MB`               |
-| `-f <type>`          | `--format`     | Output format: `png` `jpg` `webp` `bmp` `gif` | `png`              |
-| `-n <name>`          | `--name`       | Output filename (no extension)                | auto-generated     |
-| `-o <dir>`           | `--output`     | Output directory                              | current directory  |
-| `-d <WxH>`           | `--dimensions` | Pixel dimensions, e.g. `1920x1080`            | auto-calculated    |
-| `--bg-color <hex>`   |                | Background color, e.g. `#336699`              | random muted color |
-| `--text-color <hex>` |                | Text color, e.g. `#FFFFFF`                    | auto WCAG contrast |
-| `--verbose`          |                | Show detailed progress                        | —                  |
-| `--quiet`            |                | Print only the output file path               | —                  |
-| `-v`                 | `--version`    | Show version                                  | —                  |
-| `-h`                 | `--help`       | Show help                                     | —                  |
+| 选项                 | 简写           | 说明                                     | 默认值           |
+| -------------------- | -------------- | ---------------------------------------- | ---------------- |
+| `-s <number>`        | `--size`       | 目标文件大小 **（必填）**                | —                |
+| `-u <unit>`          | `--unit`       | 单位：`KB` 或 `MB`                       | `MB`             |
+| `-f <type>`          | `--format`     | 输出格式：`png` `jpg` `webp` `bmp` `gif` | `png`            |
+| `-n <name>`          | `--name`       | 输出文件名（不含扩展名）                 | 自动生成         |
+| `-o <dir>`           | `--output`     | 输出目录                                 | 当前目录         |
+| `-d <WxH>`           | `--dimensions` | 像素尺寸，如 `1920x1080`                 | 自动计算         |
+| `--bg-color <hex>`   |                | 背景颜色，如 `#336699`                   | 随机柔和色       |
+| `--text-color <hex>` |                | 文字颜色，如 `#FFFFFF`                   | 自动 WCAG 对比度 |
+| `--verbose`          |                | 显示详细进度信息                         | —                |
+| `--quiet`            |                | 安静模式，仅输出文件路径                 | —                |
+| `-v`                 | `--version`    | 显示版本号                               | —                |
+| `-h`                 | `--help`       | 显示帮助信息                             | —                |
 
-`--verbose` and `--quiet` are mutually exclusive.
+`--verbose` 和 `--quiet` 不能同时使用。
 
-### Constraints
+### 约束条件
 
-- Maximum target size: **50 MB**
-- Minimum image dimension: **100 px** on either side
-- When `-d` conflicts with the target size, **size takes priority** and dimensions are used only as a starting reference
-- Filename characters `\ / : * ? " < > |` are not allowed
+- 最大目标大小：**50 MB**
+- 最小图像尺寸：任意一边不小于 **100 px**
+- 当 `-d` 指定的尺寸与目标大小冲突时，**以大小为准**，尺寸仅作为参考起点
+- 文件名中不允许出现 `\ / : * ? " < > |` 字符
 
 ---
 
-## Examples
+## 示例
 
-### Basic usage
+### 基本用法
 
 ```bash
-# 5 MB PNG (auto-calculated dimensions)
+# 5 MB PNG（自动计算尺寸）
 imgen -s 5
 
 # 500 KB JPEG
 imgen -s 500 -u KB -f jpg
 
-# 2 MB WEBP with a custom name and output directory
+# 2 MB WEBP，自定义文件名和输出目录
 imgen -s 2 -f webp -n banner -o ./output
 ```
 
-### Custom dimensions and colors
+### 自定义尺寸和颜色
 
 ```bash
-# 1920×1080 PNG with a dark blue background and white text
+# 1920×1080 PNG，深蓝色背景 + 白色文字
 imgen -s 2 -f png -d 1920x1080 --bg-color "#1a2b3c" --text-color "#ffffff"
 
-# BMP at exactly 1 MB
+# 精确 1 MB 的 BMP
 imgen -s 1 -f bmp
 ```
 
-### Scripting / piping
+### 脚本 / 管道
 
 ```bash
-# Quiet mode returns only the file path — useful in scripts
+# 安静模式只返回文件路径，适合在脚本中使用
 OUTPUT=$(imgen -s 1 -f png --quiet)
-echo "Generated: $OUTPUT"
+echo "已生成: $OUTPUT"
 ```
 
-### Verbose output
+### 详细输出
 
 ```bash
 imgen -s 3 -f jpg --verbose
@@ -104,73 +101,71 @@ imgen -s 3 -f jpg --verbose
 
 ---
 
-## File naming
+## 文件命名
 
-When `-n` is not provided, the filename is auto-generated as:
+未提供 `-n` 时，文件名自动生成，格式为：
 
 ```
 <size><unit>-<YYYY-MM-DD-HH-mm-ss>.<format>
 ```
 
-For example: `5MB-2026-04-05-14-30-00.png`
+例如：`5MB-2026-04-05-14-30-00.png`
 
-### Same-name conflicts
+### 同名文件冲突
 
-- **Normal mode**: an interactive prompt asks whether to append a sequence
-  number (`file-1.png`), overwrite, or cancel.
-- **Quiet mode**: automatically appends a sequence number without prompting.
-
----
-
-## Precision guarantees
-
-| Format | Tolerance                                   |
-| ------ | ------------------------------------------- |
-| PNG    | Exact (±0 bytes via tEXt chunk padding)     |
-| GIF    | ±1 KB (via comment extension block padding) |
-| BMP    | Exact (trailing zero bytes appended)        |
-| JPG    | ±1% or ±5 KB, whichever is larger           |
-| WEBP   | ±1% or ±5 KB, whichever is larger           |
-
-If a dimension constraint makes the exact target unreachable, `imgen` warns
-and saves the closest achievable file.
+- **普通模式**：弹出交互式提示，可选择追加序号（`file-1.png`）、覆盖或取消。
+- **安静模式**：自动追加序号，不弹出提示。
 
 ---
 
-## Development
+## 精度保证
+
+| 格式 | 容差                              |
+| ---- | --------------------------------- |
+| PNG  | 精确（±0 字节，通过 tEXt 块填充） |
+| GIF  | ±1 KB（通过注释扩展块填充）       |
+| BMP  | 精确（追加零字节）                |
+| JPG  | ±1% 或 ±5 KB，取较大者            |
+| WEBP | ±1% 或 ±5 KB，取较大者            |
+
+如果尺寸约束导致无法精确达到目标大小，`imgen` 会发出警告并保存最接近的结果。
+
+---
+
+## 开发
 
 ```bash
-# Install dependencies
+# 安装依赖
 npm install
 
-# Run all tests
+# 运行所有测试
 npm test
 
-# Run a single test file
+# 运行单个测试文件
 node --test test/adjuster.test.js
 
-# Run locally without global install
+# 本地运行（无需全局安装）
 node bin/imgen.js -s 1 -f png
 
-# Run with verbose output for debugging
+# 使用详细输出进行调试
 node bin/imgen.js -s 2 -f jpg --verbose
 ```
 
-### Project layout
+### 项目结构
 
 ```
 bin/
-  imgen.js          entry point (shebang wrapper)
+  imgen.js          入口文件（shebang 包装器）
 src/
-  cli.js            argument parsing & validation (commander)
-  generator.js      main orchestration pipeline
-  sizer.js          auto-calculate pixel dimensions from byte target
-  color.js          random muted HSL colors + WCAG contrast text
-  renderer.js       sharp-based rendering with SVG text overlay
-  adjuster.js       precise size adjustment (pad / binary-search quality)
-  output.js         file writing + collision handling
-  logger.js         three-mode output (normal / verbose / quiet)
-  constants.js      shared constants
+  cli.js            参数解析与验证（commander）
+  generator.js      主流程编排
+  sizer.js          根据目标字节数自动计算像素尺寸
+  color.js          随机柔和 HSL 颜色 + WCAG 对比度文字
+  renderer.js       基于 sharp 的渲染，含 SVG 文字叠加
+  adjuster.js       精确大小调整（填充 / 质量二分搜索）
+  output.js         文件写入 + 冲突处理
+  logger.js         三种输出模式（普通 / 详细 / 安静）
+  constants.js      共享常量
 test/
   cli.test.js
   sizer.test.js
@@ -180,6 +175,6 @@ test/
 
 ---
 
-## License
+## 许可证
 
 MIT
