@@ -67,7 +67,10 @@ export async function save(buffer, options) {
     try {
       mkdirSync(absDir, { recursive: true });
     } catch {
-      logger.error(`无法创建输出目录 "${absDir}"`, EXIT_CODES.FILE_ERROR);
+      logger.error(
+        `Failed to create output directory "${absDir}"`,
+        EXIT_CODES.FILE_ERROR,
+      );
     }
   }
 
@@ -87,17 +90,20 @@ export async function save(buffer, options) {
     } else {
       // Interactive prompt
       const choice = await select({
-        message: `文件 "${baseName}.${format}" 已存在，请选择操作：`,
+        message: `File "${baseName}.${format}" already exists. Choose an action:`,
         choices: [
-          { name: `追加序号（如 ${baseName}-1.${format}）`, value: "append" },
-          { name: "覆盖原文件", value: "overwrite" },
-          { name: "取消操作", value: "cancel" },
+          {
+            name: `Append suffix (e.g. ${baseName}-1.${format})`,
+            value: "append",
+          },
+          { name: "Overwrite existing file", value: "overwrite" },
+          { name: "Cancel", value: "cancel" },
         ],
         default: "append",
       });
 
       if (choice === "cancel") {
-        logger.error("操作已取消", EXIT_CODES.SUCCESS);
+        logger.error("Operation cancelled", EXIT_CODES.SUCCESS);
       } else if (choice === "append") {
         targetPath = nextAvailablePath(absDir, baseName, format);
       }
@@ -109,7 +115,7 @@ export async function save(buffer, options) {
   try {
     await writeFile(targetPath, buffer);
   } catch (err) {
-    logger.error(`写入文件失败：${err.message}`, EXIT_CODES.FILE_ERROR);
+    logger.error(`Failed to write file: ${err.message}`, EXIT_CODES.FILE_ERROR);
   }
 
   return resolve(targetPath);

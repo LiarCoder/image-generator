@@ -50,18 +50,18 @@ export function success(filePath, bytes, width, height) {
       ? `${mb} MB (${bytes.toLocaleString()} bytes)`
       : `${kb} KB (${bytes.toLocaleString()} bytes)`;
 
-  console.log(chalk.green("✅ 图片生成成功！"));
-  console.log(`   ${chalk.bold("文件名：")}${filePath.split(/[\\/]/).pop()}`);
-  console.log(`   ${chalk.bold("体积：  ")}${sizeDisplay}`);
-  console.log(`   ${chalk.bold("尺寸：  ")}${width} × ${height}`);
-  console.log(`   ${chalk.bold("路径：  ")}${filePath}`);
-  console.log(`   ${chalk.bold("耗时：  ")}${elapsed}s`);
+  console.log(chalk.green("✅ Image generated successfully."));
+  console.log(`   ${chalk.bold("File:       ")}${filePath.split(/[\\/]/).pop()}`);
+  console.log(`   ${chalk.bold("Size:       ")}${sizeDisplay}`);
+  console.log(`   ${chalk.bold("Dimensions:")} ${width} × ${height}`);
+  console.log(`   ${chalk.bold("Path:       ")}${filePath}`);
+  console.log(`   ${chalk.bold("Elapsed:    ")}${elapsed}s`);
 }
 
 export function error(message, exitCode = 1) {
   stopSpinner();
   if (mode !== "quiet") {
-    console.error(chalk.red(`❌ 错误：${message}`));
+    console.error(chalk.red(`❌ Error: ${message}`));
   }
   process.exit(exitCode);
 }
@@ -69,7 +69,7 @@ export function error(message, exitCode = 1) {
 export function warn(message) {
   if (mode === "quiet") return;
   stopSpinner();
-  console.warn(chalk.yellow(`⚠️  警告：${message}`));
+  console.warn(chalk.yellow(`⚠️  Warning: ${message}`));
   // restart spinner if it was running
 }
 

@@ -33,15 +33,15 @@ export async function generate(options) {
   } = options;
   const startTime = Date.now();
 
-  logger.start("正在计算最佳尺寸...");
+  logger.start("Computing optimal dimensions...");
 
   // 1. Resolve pixel dimensions
   let { width, height } = dimOpt ?? calculate(targetBytes, format);
-  logger.debug(`初始尺寸：${width} × ${height}`);
+  logger.debug(`Initial dimensions: ${width} × ${height}`);
 
   // 2. Resolve color scheme
   const { bgColor: bg, textColor: text } = resolveColors(bgColor, textColor);
-  logger.debug(`背景色：${bg}，文字色：${text}`);
+  logger.debug(`Background: ${bg}, text: ${text}`);
 
   // 3. Determine display name for overlay (filename without ext, or size label)
   const displayName = options.name
@@ -54,16 +54,16 @@ export async function generate(options) {
     line3: `${width} \u00d7 ${height}`,
   };
 
-  logger.updateSpinner("正在渲染图片内容...");
+  logger.updateSpinner("Rendering image...");
 
   // 4. Render the base image
   let baseBuffer = await render(width, height, bg, text, lines, format);
   logger.debug(
-    `基础图片大小：${baseBuffer.length} bytes，目标：${targetBytes} bytes`,
+    `Base image size: ${baseBuffer.length} bytes, target: ${targetBytes} bytes`,
   );
 
   // 5. Adjust to target size
-  logger.updateSpinner("正在精确调整文件体积...");
+  logger.updateSpinner("Tuning file size...");
   const {
     buffer: finalBuffer,
     width: finalWidth,
@@ -89,12 +89,12 @@ export async function generate(options) {
     const actualMb = (finalBuffer.length / 1048576).toFixed(2);
     const pctStr = (pct * 100).toFixed(1);
     logger.warn(
-      `无法精确匹配目标体积 ${size}${unit}，实际体积 ${actualMb}MB（误差 ${pctStr}%）`,
+      `Could not match target size ${size}${unit} exactly; actual size ${actualMb}MB (${pctStr}% off)`,
     );
   }
 
   // 7. Save to disk
-  logger.updateSpinner("正在写入文件...");
+  logger.updateSpinner("Writing file...");
   const filePath = await save(finalBuffer, options);
 
   // 8. Done

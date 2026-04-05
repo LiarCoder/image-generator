@@ -31,22 +31,38 @@ export function run() {
   program
     .name("imgen")
     .description("Generate images with a precise target file size")
-    .version(pkg.version, "-v, --version", "显示版本号")
-    .helpOption("-h, --help", "显示帮助信息")
+    .version(pkg.version, "-v, --version", "Show version")
+    .helpOption("-h, --help", "Show help")
+    .option("-s, --size <number>", "Target file size (positive number)")
     .option(
       "-f, --format <type>",
-      `图片格式：${SUPPORTED_FORMATS.join(" | ")}`,
+      `Image format: ${SUPPORTED_FORMATS.join(" | ")}`,
       DEFAULT_FORMAT,
     )
-    .option("-s, --size <number>", "目标文件体积（正数）")
-    .option("-u, --unit <unit>", `体积单位：KB | MB`, DEFAULT_UNIT)
-    .option("-n, --name <string>", "文件名（不含扩展名）")
-    .option("-o, --output <dir>", "输出目录（默认：当前目录）", process.cwd())
-    .option("-d, --dimensions <WxH>", "手动指定像素尺寸，如 1920x1080")
-    .option("--bg-color <color>", "背景颜色 hex 值，如 #336699")
-    .option("--text-color <color>", "文字颜色 hex 值，如 #FFFFFF")
-    .option("--verbose", "详细输出模式")
-    .option("--quiet", "安静模式，仅输出文件路径");
+    .option("-u, --unit <unit>", `Size unit: KB | MB`, DEFAULT_UNIT)
+    .option(
+      "-n, --name <string>",
+      "Filename without extension (default: ${size}${unit}-${YYYY-MM-DD-HH-mm-ss}.${format})"
+    )
+    .option(
+      "-o, --output <dir>",
+      "Output directory (default: current directory)",
+      process.cwd(),
+    )
+    .option(
+      "-d, --dimensions <WxH>",
+      "Explicit pixel dimensions, e.g. 1920x1080. (default: auto-calculated if not provided)",
+    )
+    .option(
+      "--bg-color <color>", 
+      "Background color as hex, e.g. #336699. (default: random muted color)"
+    )
+    .option(
+      "--text-color <color>", 
+      "Text color as hex, e.g. #FFFFFF. (default: auto WCAG contrast)"
+    )
+    .option("--verbose", "Verbose output", false)
+    .option("--quiet", "Quiet mode; print only the output file path", false);
 
   program.parse(process.argv);
   const opts = program.opts();
@@ -58,7 +74,7 @@ export function run() {
 
   // ── Mutually exclusive flags ─────────────────────────────────────────────
   if (opts.verbose && opts.quiet) {
-    die("--verbose 和 --quiet 不能同时使用");
+    die("`--verbose` and `--quiet` cannot be used at the same time");
   }
 
   // ── Set log mode early so subsequent errors respect it ───────────────────
@@ -69,33 +85,37 @@ export function run() {
   const format = opts.format.toLowerCase();
   if (!SUPPORTED_FORMATS.includes(format)) {
     die(
-      `不支持的格式 "${opts.format}"。支持的格式：${SUPPORTED_FORMATS.join(", ")}`,
+      `Unsupported format "${opts.format}". Supported: ${SUPPORTED_FORMATS.join(", ")}`,
     );
   }
 
   // ── -s / --size ──────────────────────────────────────────────────────────
   const sizeNum = Number(opts.size);
   if (!Number.isFinite(sizeNum) || sizeNum <= 0) {
-    die(`--size 必须为正数，当前值：${opts.size}`);
+    die(`\`--size\` must be a positive number; but got: ${opts.size}`);
   }
 
   // ── -u / --unit ──────────────────────────────────────────────────────────
   const unit = opts.unit.toUpperCase();
   if (!SUPPORTED_UNITS.includes(unit)) {
     die(
-      `不支持的单位 "${opts.unit}"。支持的单位：${SUPPORTED_UNITS.join(", ")}`,
+      `Unsupported \`--unit\` "${opts.unit}". Supported: ${SUPPORTED_UNITS.join(", ")}`,
     );
   }
 
   const targetBytes = sizeNum * (unit === "MB" ? 1048576 : 1024);
   if (targetBytes > MAX_FILE_SIZE_BYTES) {
     const limit = MAX_FILE_SIZE_BYTES / 1048576;
-    die(`目标体积 ${sizeNum}${unit} 超过最大限制 ${limit}MB`);
+    die(
+      `Target size ${sizeNum}${unit} exceeds the maximum limit of ${limit}MB`,
+    );
   }
 
   // ── -n / --name ──────────────────────────────────────────────────────────
   if (opts.name && ILLEGAL_FILENAME_RE.test(opts.name)) {
-    die(`文件名 "${opts.name}" 包含非法字符，请避免使用：\\ / : * ? " < > |`);
+    die(
+      `Filename "${opts.name}" contains illegal characters. Avoid: \\ / : * ? " < > |`,
+    );
   }
 
   // ── -d / --dimensions ────────────────────────────────────────────────────
@@ -104,13 +124,15 @@ export function run() {
     const m = opts.dimensions.match(DIMENSIONS_RE);
     if (!m) {
       die(
-        `--dimensions 格式错误 "${opts.dimensions}"，正确格式：宽x高（如 1920x1080）`,
+        `Invalid \`--dimensions\` "${opts.dimensions}". Expected: WIDTHxHEIGHT (e.g. 1920x1080)`,
       );
     }
     const w = parseInt(m[1], 10);
     const h = parseInt(m[2], 10);
     if (w <= 0 || h <= 0) {
-      die(`--dimensions 宽高必须为正整数，当前值：${opts.dimensions}`);
+      die(
+        `--dimensions width and height must be positive integers; but got: ${opts.dimensions}`,
+      );
     }
     dimensions = { width: w, height: h };
   }
@@ -118,12 +140,12 @@ export function run() {
   // ── --bg-color / --text-color ────────────────────────────────────────────
   if (opts.bgColor && !HEX_COLOR_RE.test(opts.bgColor)) {
     die(
-      `--bg-color 格式错误 "${opts.bgColor}"，请使用 hex 格式（如 #336699 或 #f00）`,
+      `Invalid \`--bg-color\` "${opts.bgColor}". Use hex (e.g. #336699 or #f00)`,
     );
   }
   if (opts.textColor && !HEX_COLOR_RE.test(opts.textColor)) {
     die(
-      `--text-color 格式错误 "${opts.textColor}"，请使用 hex 格式（如 #FFFFFF 或 #fff）`,
+      `Invalid \`--text-color\` "${opts.textColor}". Use hex (e.g. #FFFFFF or #fff)`,
     );
   }
 

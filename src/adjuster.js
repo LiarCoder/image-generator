@@ -103,7 +103,7 @@ async function adjustLossy(
     const diff = Math.abs(buf.length - targetBytes);
 
     logger.debug(
-      `质量调整 [${iterations + 1}/${BINARY_SEARCH_MAX_ITERATIONS}] quality=${mid} size=${buf.length} diff=${diff}`,
+      `Quality tuning [${iterations + 1}/${BINARY_SEARCH_MAX_ITERATIONS}] quality=${mid} size=${buf.length} diff=${diff}`,
     );
 
     if (diff < bestDiff) {
@@ -174,7 +174,7 @@ async function adjustLossy(
   const newWidth = Math.max(MIN_DIMENSION, Math.round(width * scaleFactor));
   const newHeight = Math.max(MIN_DIMENSION, Math.round(height * scaleFactor));
   logger.debug(
-    `调整画布至 ${newWidth}×${newHeight}（缩放因子=${scaleFactor.toFixed(3)}）后重试`,
+    `Resizing canvas to ${newWidth}×${newHeight} (scale=${scaleFactor.toFixed(3)}), retrying`,
   );
   const updatedLines = { ...lines, line3: `${newWidth} \u00d7 ${newHeight}` };
   return adjustLossyFinal(
@@ -222,7 +222,7 @@ async function adjustLossyFinal(
     );
     const diff = Math.abs(buf.length - targetBytes);
     logger.debug(
-      `质量调整（扩大后）[${i + 1}] quality=${mid} size=${buf.length} diff=${diff}`,
+      `Quality tuning (after resize) [${i + 1}] quality=${mid} size=${buf.length} diff=${diff}`,
     );
     if (diff < bestDiff) {
       bestDiff = diff;
@@ -409,7 +409,7 @@ async function shrinkAndRender(
     const updatedLines = { ...lines, line3: `${w} \u00d7 ${h}` };
     const buf = await render(w, h, bgColor, textColor, updatedLines, format);
     logger.debug(
-      `缩小画布至 ${w}×${h}，大小=${buf.length}，目标=${targetBytes}`,
+      `Shrunk canvas to ${w}×${h}, size=${buf.length}, target=${targetBytes}`,
     );
 
     if (Math.abs(buf.length - targetBytes) <= tolerance) {
