@@ -10,7 +10,12 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "test": "node --test test/"
+    "test": "node --test test/",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "prepare": "husky"
   },
   "files": [
     "bin/",
@@ -39,5 +44,20 @@
     "ora": "^8.0.0",
     "sharp": "^0.33.0"
   },
-  "devDependencies": {}
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": "prettier --write"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1"
+  }
 }

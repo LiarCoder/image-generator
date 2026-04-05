@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync } from "fs";
-import { writeFile } from "fs/promises";
-import { join, resolve } from "path";
-import { select } from "@inquirer/prompts";
-import * as logger from "./logger.js";
-import { EXIT_CODES } from "./constants.js";
+import { existsSync, mkdirSync } from 'fs';
+import { writeFile } from 'fs/promises';
+import { join, resolve } from 'path';
+import { select } from '@inquirer/prompts';
+import * as logger from './logger.js';
+import { EXIT_CODES } from './constants.js';
 
 /**
  * Build the default filename from size + unit + timestamp.
@@ -15,7 +15,7 @@ import { EXIT_CODES } from "./constants.js";
  */
 function buildDefaultName(size, unit, format) {
   const now = new Date();
-  const pad = (n, len = 2) => String(n).padStart(len, "0");
+  const pad = (n, len = 2) => String(n).padStart(len, '0');
   const ts = [
     now.getFullYear(),
     pad(now.getMonth() + 1),
@@ -23,7 +23,7 @@ function buildDefaultName(size, unit, format) {
     pad(now.getHours()),
     pad(now.getMinutes()),
     pad(now.getSeconds()),
-  ].join("-");
+  ].join('-');
   return `${size}${unit}-${ts}.${format}`;
 }
 
@@ -67,22 +67,18 @@ export async function save(buffer, options) {
     try {
       mkdirSync(absDir, { recursive: true });
     } catch {
-      logger.error(
-        `Failed to create output directory "${absDir}"`,
-        EXIT_CODES.FILE_ERROR,
-      );
+      logger.error(`Failed to create output directory "${absDir}"`, EXIT_CODES.FILE_ERROR);
     }
   }
 
   // 2. Determine base filename (without extension)
-  const baseName =
-    name ?? buildDefaultName(size, unit, format).replace(`.${format}`, "");
+  const baseName = name ?? buildDefaultName(size, unit, format).replace(`.${format}`, '');
   const initialPath = join(absDir, `${baseName}.${format}`);
 
   // 3. Handle collision
   let targetPath = initialPath;
   if (existsSync(initialPath)) {
-    const isQuiet = logger.getMode() === "quiet";
+    const isQuiet = logger.getMode() === 'quiet';
 
     if (isQuiet) {
       // In quiet mode: silently append sequence number
@@ -94,17 +90,17 @@ export async function save(buffer, options) {
         choices: [
           {
             name: `Append suffix (e.g. ${baseName}-1.${format})`,
-            value: "append",
+            value: 'append',
           },
-          { name: "Overwrite existing file", value: "overwrite" },
-          { name: "Cancel", value: "cancel" },
+          { name: 'Overwrite existing file', value: 'overwrite' },
+          { name: 'Cancel', value: 'cancel' },
         ],
-        default: "append",
+        default: 'append',
       });
 
-      if (choice === "cancel") {
-        logger.error("Operation cancelled", EXIT_CODES.SUCCESS);
-      } else if (choice === "append") {
+      if (choice === 'cancel') {
+        logger.error('Operation cancelled', EXIT_CODES.SUCCESS);
+      } else if (choice === 'append') {
         targetPath = nextAvailablePath(absDir, baseName, format);
       }
       // 'overwrite' keeps targetPath = initialPath

@@ -10,17 +10,11 @@
  *    if quality headroom is exhausted, scale up image dimensions.
  */
 
-import sharp from "sharp";
-import { render, buildNoiseLayer } from "./renderer.js";
-import {
-  TOLERANCE,
-  BINARY_SEARCH_MAX_ITERATIONS,
-  MIN_DIMENSION,
-} from "./constants.js";
-import * as logger from "./logger.js";
+import { render, buildNoiseLayer } from './renderer.js';
+import { TOLERANCE, BINARY_SEARCH_MAX_ITERATIONS, MIN_DIMENSION } from './constants.js';
+import * as logger from './logger.js';
 
-const LOSSLESS = new Set(["png", "gif", "bmp"]);
-const LOSSY = new Set(["jpg", "webp"]);
+const LOSSY = new Set(['jpg', 'webp']);
 
 /**
  * @param {Buffer} baseBuffer   - initial rendered image buffer
@@ -44,41 +38,16 @@ export async function adjust(
   lines,
 ) {
   if (LOSSY.has(format)) {
-    return adjustLossy(
-      targetBytes,
-      format,
-      width,
-      height,
-      bgColor,
-      textColor,
-      lines,
-    );
+    return adjustLossy(targetBytes, format, width, height, bgColor, textColor, lines);
   }
-  return adjustLossless(
-    baseBuffer,
-    targetBytes,
-    format,
-    width,
-    height,
-    bgColor,
-    textColor,
-    lines,
-  );
+  return adjustLossless(baseBuffer, targetBytes, format, width, height, bgColor, textColor, lines);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lossy (JPG / WEBP) — binary search over quality
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function adjustLossy(
-  targetBytes,
-  format,
-  width,
-  height,
-  bgColor,
-  textColor,
-  lines,
-) {
+async function adjustLossy(targetBytes, format, width, height, bgColor, textColor, lines) {
   // Generate noise once — reused for every quality probe so results are deterministic
   const noise = await buildNoiseLayer(width, height);
 
@@ -90,16 +59,7 @@ async function adjustLossy(
 
   while (low <= high && iterations < BINARY_SEARCH_MAX_ITERATIONS) {
     const mid = Math.floor((low + high) / 2);
-    const buf = await render(
-      width,
-      height,
-      bgColor,
-      textColor,
-      lines,
-      format,
-      mid,
-      noise,
-    );
+    const buf = await render(width, height, bgColor, textColor, lines, format, mid, noise);
     const diff = Math.abs(buf.length - targetBytes);
 
     logger.debug(
@@ -119,10 +79,7 @@ async function adjustLossy(
     iterations++;
   }
 
-  const tolerance = Math.max(
-    targetBytes * TOLERANCE.lossy.percentage,
-    TOLERANCE.lossy.absolute,
-  );
+  const tolerance = Math.max(targetBytes * TOLERANCE.lossy.percentage, TOLERANCE.lossy.absolute);
 
   if (bestDiff <= tolerance) {
     return { buffer: bestBuffer, width, height };
@@ -136,26 +93,8 @@ async function adjustLossy(
   //   - If target > q100 size: canvas is too small  → scale up using q100 as reference
   //   - If target < q1  size: canvas is too large   → scale down using q1 as reference
   //   - Otherwise: straddle case — scale so that the closest candidate hits the target
-  const maxBuf = await render(
-    width,
-    height,
-    bgColor,
-    textColor,
-    lines,
-    format,
-    100,
-    noise,
-  );
-  const minBuf = await render(
-    width,
-    height,
-    bgColor,
-    textColor,
-    lines,
-    format,
-    1,
-    noise,
-  );
+  const maxBuf = await render(width, height, bgColor, textColor, lines, format, 100, noise);
+  const minBuf = await render(width, height, bgColor, textColor, lines, format, 1, noise);
 
   let scaleFactor;
   if (targetBytes > maxBuf.length) {
@@ -192,15 +131,7 @@ async function adjustLossy(
  * Single-pass binary search used after the canvas has been enlarged.
  * Generates its own noise layer (new canvas size) and does not recurse further.
  */
-async function adjustLossyFinal(
-  targetBytes,
-  format,
-  width,
-  height,
-  bgColor,
-  textColor,
-  lines,
-) {
+async function adjustLossyFinal(targetBytes, format, width, height, bgColor, textColor, lines) {
   const noise = await buildNoiseLayer(width, height);
 
   let low = 1,
@@ -210,16 +141,7 @@ async function adjustLossyFinal(
 
   for (let i = 0; i < BINARY_SEARCH_MAX_ITERATIONS; i++) {
     const mid = Math.floor((low + high) / 2);
-    const buf = await render(
-      width,
-      height,
-      bgColor,
-      textColor,
-      lines,
-      format,
-      mid,
-      noise,
-    );
+    const buf = await render(width, height, bgColor, textColor, lines, format, mid, noise);
     const diff = Math.abs(buf.length - targetBytes);
     logger.debug(
       `Quality tuning (after resize) [${i + 1}] quality=${mid} size=${buf.length} diff=${diff}`,
@@ -267,15 +189,7 @@ async function adjustLossless(
   }
 
   // Need to shrink: scale down dimensions and re-render
-  return shrinkAndRender(
-    targetBytes,
-    format,
-    width,
-    height,
-    bgColor,
-    textColor,
-    lines,
-  );
+  return shrinkAndRender(targetBytes, format, width, height, bgColor, textColor, lines);
 }
 
 /**
@@ -293,13 +207,13 @@ function padBuffer(buf, targetBytes, format) {
   const needed = targetBytes - buf.length;
   if (needed <= 0) return buf;
 
-  if (format === "png") {
+  if (format === 'png') {
     return padPng(buf, needed);
   }
-  if (format === "gif") {
+  if (format === 'gif') {
     return padGif(buf, needed);
   }
-  if (format === "bmp") {
+  if (format === 'bmp') {
     // Simply append zero bytes after the BMP data; BMP readers ignore trailing data
     const padding = Buffer.alloc(needed, 0);
     return Buffer.concat([buf, padding]);
@@ -328,11 +242,11 @@ function padPng(buf, neededBytes) {
   chunk.writeUInt32BE(dataLength, 0);
 
   // Chunk type "tEXt"
-  chunk.write("tEXt", 4, "ascii");
+  chunk.write('tEXt', 4, 'ascii');
 
   // Data: keyword "Comment\0" + padding zeros
-  const keyword = "Comment\0";
-  chunk.write(keyword, 8, "ascii");
+  const keyword = 'Comment\0';
+  chunk.write(keyword, 8, 'ascii');
   // Rest is already zeroed
 
   // CRC-32 over type + data (positions 4..8+dataLength)
@@ -374,26 +288,14 @@ function padGif(buf, neededBytes) {
   ]);
 
   // Insert before GIF trailer (0x3B)
-  return Buffer.concat([
-    buf.slice(0, buf.length - 1),
-    extension,
-    Buffer.from([0x3b]),
-  ]);
+  return Buffer.concat([buf.slice(0, buf.length - 1), extension, Buffer.from([0x3b])]);
 }
 
 /**
  * Iteratively shrink image dimensions until the rendered output fits within
  * targetBytes (within tolerance).
  */
-async function shrinkAndRender(
-  targetBytes,
-  format,
-  width,
-  height,
-  bgColor,
-  textColor,
-  lines,
-) {
+async function shrinkAndRender(targetBytes, format, width, height, bgColor, textColor, lines) {
   let w = width;
   let h = height;
   let lastBuffer = null;
@@ -408,9 +310,7 @@ async function shrinkAndRender(
 
     const updatedLines = { ...lines, line3: `${w} \u00d7 ${h}` };
     const buf = await render(w, h, bgColor, textColor, updatedLines, format);
-    logger.debug(
-      `Shrunk canvas to ${w}×${h}, size=${buf.length}, target=${targetBytes}`,
-    );
+    logger.debug(`Shrunk canvas to ${w}×${h}, size=${buf.length}, target=${targetBytes}`);
 
     if (Math.abs(buf.length - targetBytes) <= tolerance) {
       return { buffer: buf, width: w, height: h };

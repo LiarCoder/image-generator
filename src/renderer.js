@@ -1,5 +1,5 @@
-import sharp from "sharp";
-import { hexToRgb } from "./color.js";
+import sharp from 'sharp';
+import { hexToRgb } from './color.js';
 
 /**
  * Build a centered SVG text overlay with two (or three) lines.
@@ -32,7 +32,7 @@ function buildSvgOverlay(width, height, textColor, lines) {
 
   const line3Svg = lines.line3
     ? `<text x="${cx}" y="${y3}" font-size="${fs3}" fill="${color}" text-anchor="middle" font-family="Arial, sans-serif" font-weight="normal">${lines.line3}</text>`
-    : "";
+    : '';
 
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <text x="${cx}" y="${y1}" font-size="${fs1}" fill="${color}" text-anchor="middle" font-family="Arial, sans-serif" font-weight="normal" opacity="0.75">${escXml(lines.line1)}</text>
@@ -45,10 +45,10 @@ function buildSvgOverlay(width, height, textColor, lines) {
 
 function escXml(s) {
   return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /**
@@ -84,7 +84,7 @@ export async function render(
   ];
   // Noise overlay makes lossy formats range-adjustable via quality
   if (noiseBuffer) {
-    compositeInputs.unshift({ input: noiseBuffer, blend: "overlay" });
+    compositeInputs.unshift({ input: noiseBuffer, blend: 'overlay' });
   }
 
   const pipeline = sharp({
@@ -96,7 +96,7 @@ export async function render(
     },
   }).composite(compositeInputs);
 
-  if (format === "bmp") {
+  if (format === 'bmp') {
     const rawBuffer = await applyFormat(pipeline, format, quality).toBuffer();
     return rawToBmp(rawBuffer, width, height);
   }
@@ -127,15 +127,15 @@ export async function buildNoiseLayer(width, height) {
  */
 export function applyFormat(pipeline, format, quality = 80) {
   switch (format) {
-    case "jpg":
+    case 'jpg':
       return pipeline.jpeg({ quality, mozjpeg: false });
-    case "png":
+    case 'png':
       return pipeline.png({ compressionLevel: 6 });
-    case "webp":
+    case 'webp':
       return pipeline.webp({ quality });
-    case "gif":
+    case 'gif':
       return pipeline.gif();
-    case "bmp":
+    case 'bmp':
       // sharp has no native BMP encoder — encode as raw RGB then build header
       return pipeline.raw();
     default:
@@ -160,7 +160,7 @@ export function rawToBmp(rawPixels, width, height) {
   const buf = Buffer.alloc(fileSize, 0);
 
   // ── BMP File Header (14 bytes) ──
-  buf.write("BM", 0, "ascii"); // magic
+  buf.write('BM', 0, 'ascii'); // magic
   buf.writeUInt32LE(fileSize, 2); // file size
   buf.writeUInt32LE(0, 6); // reserved
   buf.writeUInt32LE(54, 10); // pixel data offset

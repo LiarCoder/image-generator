@@ -13,7 +13,7 @@
  * @returns {{ r: number, g: number, b: number }}
  */
 export function hexToRgb(hex) {
-  let h = hex.replace("#", "");
+  let h = hex.replace('#', '');
   if (h.length === 3) {
     h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
   }
@@ -35,9 +35,9 @@ function hslToHex(h, s, l) {
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = ll - c / 2;
 
-  let r = 0,
-    g = 0,
-    b = 0;
+  let r;
+  let g;
+  let b;
   if (h < 60) {
     r = c;
     g = x;
@@ -67,7 +67,7 @@ function hslToHex(h, s, l) {
   const toHex = (v) =>
     Math.round((v + m) * 255)
       .toString(16)
-      .padStart(2, "0");
+      .padStart(2, '0');
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
@@ -100,7 +100,7 @@ function randomMutedColor() {
  */
 function autoTextColor(bgHex) {
   const lum = relativeLuminance(hexToRgb(bgHex));
-  return lum > 0.35 ? "#1a1a1a" : "#f0f0f0";
+  return lum > 0.35 ? '#1a1a1a' : '#f0f0f0';
 }
 
 /**
