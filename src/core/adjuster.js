@@ -15,6 +15,19 @@ import { TOLERANCE, BINARY_SEARCH_MAX_ITERATIONS, MIN_DIMENSION } from '../const
 import { logger } from '../utils/logger.js';
 
 const LOSSY = new Set(['jpg', 'webp']);
+const MAX_SHRINK_ATTEMPTS = 10;
+
+/**
+ * Build display lines with updated dimensions.
+ *
+ * @param {{ line1:string, line2:string, line3?:string }} lines
+ * @param {number} width
+ * @param {number} height
+ * @returns {{ line1:string, line2:string, line3:string }}
+ */
+function withDimensions(lines, width, height) {
+  return { ...lines, line3: `${width} × ${height}` };
+}
 
 /**
  * @param {Buffer} baseBuffer   - initial rendered image buffer
@@ -115,7 +128,7 @@ async function adjustLossy(targetBytes, format, width, height, bgColor, textColo
   logger.debug(
     `Resizing canvas to ${newWidth}×${newHeight} (scale=${scaleFactor.toFixed(3)}), retrying`,
   );
-  const updatedLines = { ...lines, line3: `${newWidth} × ${newHeight}` };
+  const updatedLines = withDimensions(lines, newWidth, newHeight);
   return adjustLossyFinal(
     targetBytes,
     format,
@@ -301,14 +314,14 @@ async function shrinkAndRender(targetBytes, format, width, height, bgColor, text
   let lastBuffer = null;
   const tolerance = TOLERANCE.lossless;
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < MAX_SHRINK_ATTEMPTS; i++) {
     // Estimate scale factor: current > target, so reduce proportionally
     const current = lastBuffer?.length ?? w * h * 3;
     const scale = Math.sqrt(targetBytes / current) * 0.97; // 3% safety margin
     w = Math.max(MIN_DIMENSION, Math.round(w * scale));
     h = Math.max(MIN_DIMENSION, Math.round(h * scale));
 
-    const updatedLines = { ...lines, line3: `${w} × ${h}` };
+    const updatedLines = withDimensions(lines, w, h);
     const buf = await render(w, h, bgColor, textColor, updatedLines, format);
     logger.debug(`Shrunk canvas to ${w}×${h}, size=${buf.length}, target=${targetBytes}`);
 
