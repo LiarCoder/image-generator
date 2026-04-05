@@ -1,5 +1,5 @@
 {
-  "name": "image-generator",
+  "name": "@liarcoder/image-generator",
   "version": "2.0.0",
   "description": "CLI tool to generate images with a precise target file size",
   "type": "module",
@@ -22,7 +22,15 @@
     "generator",
     "placeholder"
   ],
-  "author": "liaw",
+  "author": "LiarCoder",
+  "homepage": "https://github.com/LiarCoder/image-generator",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LiarCoder/image-generator"
+  },
+  "bugs": {
+    "url": "https://github.com/LiarCoder/image-generator/issues"
+  },
   "license": "MIT",
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
