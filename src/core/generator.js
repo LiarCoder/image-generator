@@ -1,4 +1,4 @@
-import { resolve as resolveColors } from '../utils/color.js';
+import { colorProcessor } from '../utils/color.js';
 import { calculate } from './sizer.js';
 import { render } from './renderer.js';
 import { adjust } from './adjuster.js';
@@ -29,7 +29,7 @@ export async function generate(options) {
   logger.debug(`Initial dimensions: ${width} × ${height}`);
 
   // 2. Resolve color scheme
-  const { bgColor: bg, textColor: text } = resolveColors(bgColor, textColor);
+  const { bgColor: bg, textColor: text } = colorProcessor.resolve(bgColor, textColor);
   logger.debug(`Background: ${bg}, text: ${text}`);
 
   // 3. Determine display name for overlay (filename without ext, or size label)

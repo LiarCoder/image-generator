@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { hexToRgb } from '../utils/color.js';
+import { colorProcessor } from '../utils/color.js';
 
 /**
  * Build a centered SVG text overlay with two (or three) lines.
@@ -73,7 +73,7 @@ export async function render(
   quality = 80,
   noiseBuffer = null, // pre-generated; reuse across iterations for determinism
 ) {
-  const { r, g, b } = hexToRgb(bgColor);
+  const { r, g, b } = colorProcessor.hexToRgb(bgColor);
 
   const compositeInputs = [
     {
