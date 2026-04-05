@@ -37,6 +37,9 @@
     "url": "https://github.com/LiarCoder/image-generator/issues"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
     "chalk": "^5.0.0",

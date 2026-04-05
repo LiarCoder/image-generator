@@ -1,0 +1,55 @@
+# Merge / push to main → test + lint → publish to npm (only if package.json version is new on registry).
+#
+# Setup (one-time on GitHub):
+# 1. npm: create an Automation token (or granular token with publish) at https://www.npmjs.com/
+# 2. Repo → Settings → Secrets and variables → Actions → New repository secret
+#    Name: NPM_TOKEN   Value: <token>
+
+name: Publish npm
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm test
+
+      - name: Skip publish if this version already exists on npm
+        id: version
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VER=$(node -p "require('./package.json').version")
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          if npm view "${NAME}@${VER}" version >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Version ${VER} is already published; skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Version ${VER} not on registry; will publish."
+          fi
+
+      - name: Publish to npm
+        if: steps.version.outputs.skip == 'false'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
