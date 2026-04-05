@@ -18,9 +18,34 @@ import { generate } from './generator.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'));
+// 1 MB = 1024 * 1024 bytes
+const MB_TO_BYTES = 1024 * 1024;
+// 1 KB = 1024 bytes
+const KB_TO_BYTES = 1024;
 
 function die(message) {
   logger.error(message, EXIT_CODES.PARAM_ERROR);
+}
+
+/**
+ * Parse and validate dimensions string.
+ *
+ * @param {string} dimensionsText
+ * @returns {{ width: number, height: number }}
+ */
+function parseDimensionsOption(dimensionsText) {
+  const m = dimensionsText.match(DIMENSIONS_RE);
+  if (!m) {
+    die(`Invalid \`--dimensions\` "${dimensionsText}". Expected: WIDTHxHEIGHT (e.g. 1920x1080)`);
+  }
+
+  const width = parseInt(m[1], 10);
+  const height = parseInt(m[2], 10);
+  if (width <= 0 || height <= 0) {
+    die(`--dimensions width and height must be positive integers; but got: ${dimensionsText}`);
+  }
+
+  return { width, height };
 }
 
 export function run() {
@@ -89,9 +114,10 @@ export function run() {
     die(`Unsupported \`--unit\` "${opts.unit}". Supported: ${SUPPORTED_UNITS.join(', ')}`);
   }
 
-  const targetBytes = sizeNum * (unit === 'MB' ? 1048576 : 1024);
+  const unitScale = unit === 'MB' ? MB_TO_BYTES : KB_TO_BYTES;
+  const targetBytes = sizeNum * unitScale;
   if (targetBytes > MAX_FILE_SIZE_BYTES) {
-    const limit = MAX_FILE_SIZE_BYTES / 1048576;
+    const limit = MAX_FILE_SIZE_BYTES / MB_TO_BYTES;
     die(`Target size ${sizeNum}${unit} exceeds the maximum limit of ${limit}MB`);
   }
 
@@ -101,19 +127,7 @@ export function run() {
   }
 
   // ── -d / --dimensions ────────────────────────────────────────────────────
-  let dimensions = null;
-  if (opts.dimensions) {
-    const m = opts.dimensions.match(DIMENSIONS_RE);
-    if (!m) {
-      die(`Invalid \`--dimensions\` "${opts.dimensions}". Expected: WIDTHxHEIGHT (e.g. 1920x1080)`);
-    }
-    const w = parseInt(m[1], 10);
-    const h = parseInt(m[2], 10);
-    if (w <= 0 || h <= 0) {
-      die(`--dimensions width and height must be positive integers; but got: ${opts.dimensions}`);
-    }
-    dimensions = { width: w, height: h };
-  }
+  const dimensions = opts.dimensions ? parseDimensionsOption(opts.dimensions) : null;
 
   // ── --bg-color / --text-color ────────────────────────────────────────────
   if (opts.bgColor && !HEX_COLOR_RE.test(opts.bgColor)) {
