@@ -1,9 +1,9 @@
-export const SUPPORTED_FORMATS = ["jpg", "png", "gif", "bmp", "webp"];
+export const SUPPORTED_FORMATS = ['jpg', 'png', 'gif', 'bmp', 'webp'];
 
-export const SUPPORTED_UNITS = ["KB", "MB"];
+export const SUPPORTED_UNITS = ['KB', 'MB'];
 
-export const DEFAULT_FORMAT = "png";
-export const DEFAULT_UNIT = "MB";
+export const DEFAULT_FORMAT = 'png';
+export const DEFAULT_UNIT = 'MB';
 export const DEFAULT_ASPECT_RATIO = 4 / 3;
 
 /** 50 MB in bytes */

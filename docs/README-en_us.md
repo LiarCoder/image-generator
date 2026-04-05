@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/%40liarcoder%2Fimage-generator.svg)](https://www.npmjs.com/package/@liarcoder/image-generator)
 
-English | [简体中文](./README.md)
+English | [简体中文](../README.md) | [Changelog](./CHANGELOG-en_us.md)
 
 CLI tool that generates images with a **precise target file size**.
 
@@ -44,7 +44,7 @@ npx @liarcoder/image-generator
 ```bash
 # Clone and install dependencies
 git clone <repo-url>
-cd img-generator
+cd image-generator
 npm install
 
 # Make the command available globally
@@ -129,13 +129,13 @@ imgen -s 3 -f jpg --verbose
 <details>
 <summary>Click to see example images</summary>
 
-| Example | Command | Output |
-|---------|---------|--------|
-| PNG — 5 MB | `imgen -s 5 -f png` | ![PNG 5MB](assets/example-png-5mb.png) |
-| JPG — 500 KB | `imgen -s 500 -u KB -f jpg` | ![JPG 500KB](assets/example-jpg-500kb.jpg) |
-| WEBP — 2 MB | `imgen -s 2 -f webp` | ![WEBP 2MB](assets/example-webp-2mb.webp) |
-| BMP — 1 MB | `imgen -s 1 -f bmp` | ![BMP 1MB](assets/example-bmp-1mb.bmp) |
-| Custom color PNG | `imgen -s 1 -f png -d 1920x1080 --bg-color "#1a2b3c" --text-color "#ffffff"` | ![Custom colors](assets/example-custom-colors.png) |
+| Example          | Command                                                                      | Output                                                |
+| ---------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------- |
+| PNG — 5 MB       | `imgen -s 5 -f png`                                                          | ![PNG 5MB](../assets/example-png-5mb.png)             |
+| JPG — 500 KB     | `imgen -s 500 -u KB -f jpg`                                                  | ![JPG 500KB](../assets/example-jpg-500kb.jpg)         |
+| WEBP — 2 MB      | `imgen -s 2 -f webp`                                                         | ![WEBP 2MB](../assets/example-webp-2mb.webp)          |
+| BMP — 1 MB       | `imgen -s 1 -f bmp`                                                          | ![BMP 1MB](../assets/example-bmp-1mb.bmp)             |
+| Custom color PNG | `imgen -s 1 -f png -d 1920x1080 --bg-color "#1a2b3c" --text-color "#ffffff"` | ![Custom colors](../assets/example-custom-colors.png) |
 
 </details>
 
@@ -180,6 +180,18 @@ and saves the closest achievable file.
 # Install dependencies
 npm install
 
+# Run lint checks
+npm run lint
+
+# Auto-fix lint issues where possible
+npm run lint:fix
+
+# Format files
+npm run format
+
+# Check formatting without writing changes
+npm run format:check
+
 # Run all tests
 npm test
 
@@ -192,6 +204,14 @@ node bin/imgen.js -s 1 -f png
 # Run with verbose output for debugging
 node bin/imgen.js -s 2 -f jpg --verbose
 ```
+
+If Git hooks are not enabled locally after the first clone, run once:
+
+```bash
+npm run prepare
+```
+
+On commit, `husky + lint-staged` now automatically lint and format staged files.
 
 ### Project layout
 
@@ -214,6 +234,12 @@ test/
   color.test.js
   adjuster.test.js
 ```
+
+---
+
+## Changelog
+
+See [CHANGELOG-en_us.md](./CHANGELOG-en_us.md) for the full release history.
 
 ---
 

@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/%40liarcoder%2Fimage-generator.svg)](https://www.npmjs.com/package/@liarcoder/image-generator)
 
-[English](./README-en_us.md) | 简体中文
+[English](./docs/README-en_us.md) | 简体中文 | [更新日志](./CHANGELOG.md)
 
 一个可以生成**精确目标文件大小**的命令行工具。
 
@@ -41,7 +41,7 @@ npx @liarcoder/image-generator
 ```bash
 # 克隆仓库并安装依赖
 git clone <repo-url>
-cd img-generator
+cd image-generator
 npm install
 
 # 将命令添加到全局
@@ -126,12 +126,12 @@ imgen -s 3 -f jpg --verbose
 <details>
 <summary>展开查看示例图片</summary>
 
-| 示例 | 命令 | 生成图片 |
-|------|------|----------|
-| PNG — 5 MB | `imgen -s 5 -f png` | ![PNG 5MB](assets/example-png-5mb.png) |
-| JPG — 500 KB | `imgen -s 500 -u KB -f jpg` | ![JPG 500KB](assets/example-jpg-500kb.jpg) |
-| WEBP — 2 MB | `imgen -s 2 -f webp` | ![WEBP 2MB](assets/example-webp-2mb.webp) |
-| BMP — 1 MB | `imgen -s 1 -f bmp` | ![BMP 1MB](assets/example-bmp-1mb.bmp) |
+| 示例           | 命令                                                                         | 生成图片                                        |
+| -------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- |
+| PNG — 5 MB     | `imgen -s 5 -f png`                                                          | ![PNG 5MB](assets/example-png-5mb.png)          |
+| JPG — 500 KB   | `imgen -s 500 -u KB -f jpg`                                                  | ![JPG 500KB](assets/example-jpg-500kb.jpg)      |
+| WEBP — 2 MB    | `imgen -s 2 -f webp`                                                         | ![WEBP 2MB](assets/example-webp-2mb.webp)       |
+| BMP — 1 MB     | `imgen -s 1 -f bmp`                                                          | ![BMP 1MB](assets/example-bmp-1mb.bmp)          |
 | 自定义颜色 PNG | `imgen -s 1 -f png -d 1920x1080 --bg-color "#1a2b3c" --text-color "#ffffff"` | ![自定义颜色](assets/example-custom-colors.png) |
 
 </details>
@@ -175,6 +175,18 @@ imgen -s 3 -f jpg --verbose
 # 安装依赖
 npm install
 
+# 运行代码检查
+npm run lint
+
+# 自动修复可修复的 lint 问题
+npm run lint:fix
+
+# 执行格式化
+npm run format
+
+# 仅检查格式（不改文件）
+npm run format:check
+
 # 运行所有测试
 npm test
 
@@ -187,6 +199,14 @@ node bin/imgen.js -s 1 -f png
 # 使用详细输出进行调试
 node bin/imgen.js -s 2 -f jpg --verbose
 ```
+
+首次克隆后如果本地没有启用 Git hooks，可执行一次：
+
+```bash
+npm run prepare
+```
+
+提交时会自动通过 `husky + lint-staged` 对暂存的改动文件执行检查与格式化。
 
 ### 项目结构
 
@@ -209,6 +229,12 @@ test/
   color.test.js
   adjuster.test.js
 ```
+
+---
+
+## 更新日志
+
+详见 [CHANGELOG.md](./CHANGELOG.md)。英文版见 [docs/CHANGELOG-en_us.md](./docs/CHANGELOG-en_us.md)。
 
 ---
 
