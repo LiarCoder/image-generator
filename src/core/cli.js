@@ -14,7 +14,7 @@ import {
   ILLEGAL_FILENAME_RE,
 } from '../constants/index.js';
 import { logger } from '../utils/logger.js';
-import { generate } from './generator.js';
+import { ImageGenerator } from './generator.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'));
@@ -141,7 +141,7 @@ export function run() {
   }
 
   // ── Dispatch ─────────────────────────────────────────────────────────────
-  generate({
+  ImageGenerator.generate({
     format,
     size: sizeNum,
     unit,

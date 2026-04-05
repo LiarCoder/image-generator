@@ -1,6 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { calculate, parseDimensions } from '../src/core/sizer.js';
+import { ImageSizer } from '../src/core/sizer.js';
+
+const { calculate, parseDimensions } = ImageSizer;
 
 describe('sizer', () => {
   describe('calculate()', () => {

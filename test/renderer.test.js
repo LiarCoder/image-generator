@@ -1,7 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { render, buildNoiseLayer, applyFormat, rawToBmp } from '../src/core/renderer.js';
+import { ImageRenderer } from '../src/core/renderer.js';
+
+const { render, buildNoiseLayer, applyFormat, rawToBmp } = ImageRenderer;
 
 const BG = '#4a607a';
 const TEXT = '#f0f0f0';
