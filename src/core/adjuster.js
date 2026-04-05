@@ -12,7 +12,7 @@
 
 import { render, buildNoiseLayer } from './renderer.js';
 import { TOLERANCE, BINARY_SEARCH_MAX_ITERATIONS, MIN_DIMENSION } from '../constants/index.js';
-import * as logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 const LOSSY = new Set(['jpg', 'webp']);
 

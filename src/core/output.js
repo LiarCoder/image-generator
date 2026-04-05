@@ -2,7 +2,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { select } from '@inquirer/prompts';
-import * as logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 import { EXIT_CODES } from '../constants/index.js';
 
 /**

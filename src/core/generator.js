@@ -3,7 +3,7 @@ import { calculate } from './sizer.js';
 import { render } from './renderer.js';
 import { adjust } from './adjuster.js';
 import { save } from './output.js';
-import * as logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Main generation flow.

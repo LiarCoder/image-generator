@@ -13,7 +13,7 @@ import {
   DIMENSIONS_RE,
   ILLEGAL_FILENAME_RE,
 } from '../constants/index.js';
-import * as logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 import { generate } from './generator.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
