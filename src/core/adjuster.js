@@ -11,8 +11,8 @@
  */
 
 import { render, buildNoiseLayer } from './renderer.js';
-import { TOLERANCE, BINARY_SEARCH_MAX_ITERATIONS, MIN_DIMENSION } from './constants.js';
-import * as logger from './logger.js';
+import { TOLERANCE, BINARY_SEARCH_MAX_ITERATIONS, MIN_DIMENSION } from '../constants/index.js';
+import * as logger from '../utils/logger.js';
 
 const LOSSY = new Set(['jpg', 'webp']);
 
@@ -115,7 +115,7 @@ async function adjustLossy(targetBytes, format, width, height, bgColor, textColo
   logger.debug(
     `Resizing canvas to ${newWidth}×${newHeight} (scale=${scaleFactor.toFixed(3)}), retrying`,
   );
-  const updatedLines = { ...lines, line3: `${newWidth} \u00d7 ${newHeight}` };
+  const updatedLines = { ...lines, line3: `${newWidth} × ${newHeight}` };
   return adjustLossyFinal(
     targetBytes,
     format,
@@ -308,7 +308,7 @@ async function shrinkAndRender(targetBytes, format, width, height, bgColor, text
     w = Math.max(MIN_DIMENSION, Math.round(w * scale));
     h = Math.max(MIN_DIMENSION, Math.round(h * scale));
 
-    const updatedLines = { ...lines, line3: `${w} \u00d7 ${h}` };
+    const updatedLines = { ...lines, line3: `${w} × ${h}` };
     const buf = await render(w, h, bgColor, textColor, updatedLines, format);
     logger.debug(`Shrunk canvas to ${w}×${h}, size=${buf.length}, target=${targetBytes}`);
 

@@ -9,7 +9,7 @@ import {
   HEX_COLOR_RE,
   DIMENSIONS_RE,
   ILLEGAL_FILENAME_RE,
-} from '../src/constants.js';
+} from '../src/constants/index.js';
 
 /**
  * CLI validation tests.

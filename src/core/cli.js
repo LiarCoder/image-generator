@@ -12,12 +12,12 @@ import {
   HEX_COLOR_RE,
   DIMENSIONS_RE,
   ILLEGAL_FILENAME_RE,
-} from './constants.js';
-import * as logger from './logger.js';
+} from '../constants/index.js';
+import * as logger from '../utils/logger.js';
 import { generate } from './generator.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8'));
+const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'));
 
 function die(message) {
   logger.error(message, EXIT_CODES.PARAM_ERROR);

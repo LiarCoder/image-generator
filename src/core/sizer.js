@@ -3,7 +3,7 @@ import {
   DEFAULT_ASPECT_RATIO,
   MIN_DIMENSION,
   DIMENSIONS_RE,
-} from './constants.js';
+} from '../constants/index.js';
 
 /**
  * Automatically calculate image dimensions from a target byte size and format.

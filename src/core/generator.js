@@ -1,9 +1,9 @@
-import { resolve as resolveColors } from './color.js';
+import { resolve as resolveColors } from '../utils/color.js';
 import { calculate } from './sizer.js';
 import { render } from './renderer.js';
 import { adjust } from './adjuster.js';
 import { save } from './output.js';
-import * as logger from './logger.js';
+import * as logger from '../utils/logger.js';
 
 /**
  * Main generation flow.
@@ -38,7 +38,7 @@ export async function generate(options) {
   const lines = {
     line1: displayName,
     line2: `${size}${unit}`,
-    line3: `${width} \u00d7 ${height}`,
+    line3: `${width} × ${height}`,
   };
 
   logger.updateSpinner('Rendering image...');

@@ -12,7 +12,7 @@ const TMP = join(__dirname, '..', 'temp', 'output-test-tmp');
 
 /**
  * Re-implement the private helpers here so we can unit-test them without
- * spawning a process.  Keep in sync with src/output.js.
+ * spawning a process.  Keep in sync with src/core/output.js.
  */
 function buildDefaultName(size, unit, format) {
   const now = new Date();

@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { hexToRgb } from './color.js';
+import { hexToRgb } from '../utils/color.js';
 
 /**
  * Build a centered SVG text overlay with two (or three) lines.

@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { adjust } from '../src/adjuster.js';
-import { render } from '../src/renderer.js';
-import { calculate } from '../src/sizer.js';
+import { adjust } from '../src/core/adjuster.js';
+import { render } from '../src/core/renderer.js';
+import { calculate } from '../src/core/sizer.js';
 
 const BG = '#4a607a';
 const TEXT = '#f0f0f0';
@@ -83,8 +83,8 @@ describe('adjuster', () => {
 
   describe('PNG shrink path (base larger than target)', () => {
     it('shrinks and stays within \u00b11 KB when base exceeds target', async () => {
-      const { render: renderFn } = await import('../src/renderer.js');
-      const { adjust: adjustFn } = await import('../src/adjuster.js');
+      const { render: renderFn } = await import('../src/core/renderer.js');
+      const { adjust: adjustFn } = await import('../src/core/adjuster.js');
 
       // Render at a sizeable canvas, then pad the buffer to guarantee it exceeds
       // the target — this reliably exercises the shrinkAndRender code path.

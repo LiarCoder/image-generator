@@ -2,8 +2,8 @@ import { existsSync, mkdirSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { select } from '@inquirer/prompts';
-import * as logger from './logger.js';
-import { EXIT_CODES } from './constants.js';
+import * as logger from '../utils/logger.js';
+import { EXIT_CODES } from '../constants/index.js';
 
 /**
  * Build the default filename from size + unit + timestamp.
