@@ -99,6 +99,21 @@ echo "已生成: $OUTPUT"
 imgen -s 3 -f jpg --verbose
 ```
 
+### 示例输出预览
+
+<details>
+<summary>展开查看示例图片</summary>
+
+| 示例 | 命令 | 生成图片 |
+|------|------|----------|
+| PNG — 5 MB | `imgen -s 5 -f png` | ![PNG 5MB](assets/example-png-5mb.png) |
+| JPG — 500 KB | `imgen -s 500 -u KB -f jpg` | ![JPG 500KB](assets/example-jpg-500kb.jpg) |
+| WEBP — 2 MB | `imgen -s 2 -f webp` | ![WEBP 2MB](assets/example-webp-2mb.webp) |
+| BMP — 1 MB | `imgen -s 1 -f bmp` | ![BMP 1MB](assets/example-bmp-1mb.bmp) |
+| 自定义颜色 PNG | `imgen -s 1 -f png -d 1920x1080 --bg-color "#1a2b3c" --text-color "#ffffff"` | ![自定义颜色](assets/example-custom-colors.png) |
+
+</details>
+
 ---
 
 ## 文件命名

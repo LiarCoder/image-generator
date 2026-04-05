@@ -102,6 +102,21 @@ echo "Generated: $OUTPUT"
 imgen -s 3 -f jpg --verbose
 ```
 
+### Output previews
+
+<details>
+<summary>Click to see example images</summary>
+
+| Example | Command | Output |
+|---------|---------|--------|
+| PNG — 5 MB | `imgen -s 5 -f png` | ![PNG 5MB](assets/example-png-5mb.png) |
+| JPG — 500 KB | `imgen -s 500 -u KB -f jpg` | ![JPG 500KB](assets/example-jpg-500kb.jpg) |
+| WEBP — 2 MB | `imgen -s 2 -f webp` | ![WEBP 2MB](assets/example-webp-2mb.webp) |
+| BMP — 1 MB | `imgen -s 1 -f bmp` | ![BMP 1MB](assets/example-bmp-1mb.bmp) |
+| Custom color PNG | `imgen -s 1 -f png -d 1920x1080 --bg-color "#1a2b3c" --text-color "#ffffff"` | ![Custom colors](assets/example-custom-colors.png) |
+
+</details>
+
 ---
 
 ## File naming
