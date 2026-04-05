@@ -11,7 +11,7 @@
  */
 
 import sharp from "sharp";
-import { render, rawToBmp } from "./renderer.js";
+import { render, buildNoiseLayer } from "./renderer.js";
 import {
   TOLERANCE,
   BINARY_SEARCH_MAX_ITERATIONS,
@@ -79,6 +79,9 @@ async function adjustLossy(
   textColor,
   lines,
 ) {
+  // Generate noise once — reused for every quality probe so results are deterministic
+  const noise = await buildNoiseLayer(width, height);
+
   let low = 1,
     high = 100;
   let bestBuffer = null;
@@ -95,6 +98,7 @@ async function adjustLossy(
       lines,
       format,
       mid,
+      noise,
     );
     const diff = Math.abs(buf.length - targetBytes);
 
@@ -108,53 +112,72 @@ async function adjustLossy(
     }
 
     if (buf.length < targetBytes) {
-      low = mid + 1; // need larger file → increase quality
+      low = mid + 1;
     } else {
-      high = mid - 1; // need smaller file → decrease quality
+      high = mid - 1;
     }
     iterations++;
   }
 
-  // If quality=100 and still too small, we need a larger canvas
   const tolerance = Math.max(
     targetBytes * TOLERANCE.lossy.percentage,
     TOLERANCE.lossy.absolute,
   );
 
-  if (bestDiff > tolerance) {
-    logger.debug(`体积误差 ${bestDiff} bytes 超过容差，尝试扩大画布...`);
-    return scaleAndAdjustLossy(
-      targetBytes,
-      format,
-      width,
-      height,
-      bgColor,
-      textColor,
-      lines,
-    );
+  if (bestDiff <= tolerance) {
+    return { buffer: bestBuffer, width, height };
   }
 
-  return { buffer: bestBuffer, width, height };
-}
+  // Binary search exhausted but still outside tolerance.
+  // The quality axis is too coarse (adjacent integer qualities straddle the target),
+  // so we resize the canvas to shift the quality curve until the target is reachable.
+  //
+  // Strategy: probe quality=1 and quality=100 to bracket the canvas range.
+  //   - If target > q100 size: canvas is too small  → scale up using q100 as reference
+  //   - If target < q1  size: canvas is too large   → scale down using q1 as reference
+  //   - Otherwise: straddle case — scale so that the closest candidate hits the target
+  const maxBuf = await render(
+    width,
+    height,
+    bgColor,
+    textColor,
+    lines,
+    format,
+    100,
+    noise,
+  );
+  const minBuf = await render(
+    width,
+    height,
+    bgColor,
+    textColor,
+    lines,
+    format,
+    1,
+    noise,
+  );
 
-async function scaleAndAdjustLossy(
-  targetBytes,
-  format,
-  width,
-  height,
-  bgColor,
-  textColor,
-  lines,
-) {
-  // Scale up by ~20% and retry once
-  const newWidth = Math.round(width * 1.2);
-  const newHeight = Math.round(height * 1.2);
-  const updatedLines = {
-    ...lines,
-    line3: `${newWidth} \u00d7 ${newHeight}`,
-  };
-  logger.debug(`扩大画布至 ${newWidth}×${newHeight} 后重试质量调整`);
-  return adjustLossy(
+  let scaleFactor;
+  if (targetBytes > maxBuf.length) {
+    // Need bigger canvas
+    scaleFactor = Math.sqrt((targetBytes * 1.15) / maxBuf.length);
+  } else if (targetBytes < minBuf.length) {
+    // Need smaller canvas
+    scaleFactor = Math.sqrt(targetBytes / (minBuf.length * 1.15));
+  } else {
+    // Target is reachable by quality alone but integer quality is too coarse.
+    // Scale canvas so that quality=100 of the new canvas ≈ target,
+    // giving fine-grained control around the target.
+    scaleFactor = Math.sqrt(targetBytes / maxBuf.length);
+  }
+
+  const newWidth = Math.max(MIN_DIMENSION, Math.round(width * scaleFactor));
+  const newHeight = Math.max(MIN_DIMENSION, Math.round(height * scaleFactor));
+  logger.debug(
+    `调整画布至 ${newWidth}×${newHeight}（缩放因子=${scaleFactor.toFixed(3)}）后重试`,
+  );
+  const updatedLines = { ...lines, line3: `${newWidth} \u00d7 ${newHeight}` };
+  return adjustLossyFinal(
     targetBytes,
     format,
     newWidth,
@@ -163,6 +186,57 @@ async function scaleAndAdjustLossy(
     textColor,
     updatedLines,
   );
+}
+
+/**
+ * Single-pass binary search used after the canvas has been enlarged.
+ * Generates its own noise layer (new canvas size) and does not recurse further.
+ */
+async function adjustLossyFinal(
+  targetBytes,
+  format,
+  width,
+  height,
+  bgColor,
+  textColor,
+  lines,
+) {
+  const noise = await buildNoiseLayer(width, height);
+
+  let low = 1,
+    high = 100;
+  let bestBuffer = null;
+  let bestDiff = Infinity;
+
+  for (let i = 0; i < BINARY_SEARCH_MAX_ITERATIONS; i++) {
+    const mid = Math.floor((low + high) / 2);
+    const buf = await render(
+      width,
+      height,
+      bgColor,
+      textColor,
+      lines,
+      format,
+      mid,
+      noise,
+    );
+    const diff = Math.abs(buf.length - targetBytes);
+    logger.debug(
+      `质量调整（扩大后）[${i + 1}] quality=${mid} size=${buf.length} diff=${diff}`,
+    );
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestBuffer = buf;
+    }
+    if (buf.length < targetBytes) {
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+    if (low > high) break;
+  }
+
+  return { buffer: bestBuffer, width, height };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

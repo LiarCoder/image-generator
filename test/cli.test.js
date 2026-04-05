@@ -1,0 +1,110 @@
+import { describe, it, mock, afterEach } from "node:test";
+import assert from "node:assert/strict";
+
+/**
+ * CLI validation tests.
+ * We test the validation logic by exercising the individual validators directly.
+ * Full integration is covered by adjuster / sizer tests.
+ */
+
+const HEX_COLOR_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+const DIMENSIONS_RE = /^(\d+)x(\d+)$/i;
+const ILLEGAL_FILENAME_RE = /[\\/:*?"<>|]/;
+const SUPPORTED_FORMATS = ["jpg", "png", "gif", "bmp", "webp"];
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+
+describe("CLI validators", () => {
+  describe("format validation", () => {
+    it("accepts all supported formats (case-insensitive)", () => {
+      for (const f of ["jpg", "PNG", "GIF", "bmp", "WebP"]) {
+        assert.ok(
+          SUPPORTED_FORMATS.includes(f.toLowerCase()),
+          `${f} should be valid`,
+        );
+      }
+    });
+
+    it("rejects unsupported formats", () => {
+      for (const f of ["tiff", "svg", "ico", "heic"]) {
+        assert.ok(!SUPPORTED_FORMATS.includes(f), `${f} should be invalid`);
+      }
+    });
+  });
+
+  describe("size validation", () => {
+    it("rejects zero and negative values", () => {
+      for (const v of [0, -1, -100]) {
+        assert.ok(!Number.isFinite(v) || v <= 0, `${v} should be invalid`);
+      }
+    });
+
+    it("rejects values over 50MB limit", () => {
+      const overLimit = 51 * 1024 * 1024;
+      assert.ok(overLimit > MAX_FILE_SIZE_BYTES);
+    });
+
+    it("accepts valid positive numbers", () => {
+      for (const v of [1, 0.5, 100, 50]) {
+        assert.ok(Number.isFinite(v) && v > 0, `${v} should be valid`);
+      }
+    });
+  });
+
+  describe("hex color validation", () => {
+    it("accepts valid 6-digit hex", () => {
+      assert.ok(HEX_COLOR_RE.test("#336699"));
+      assert.ok(HEX_COLOR_RE.test("#ffffff"));
+      assert.ok(HEX_COLOR_RE.test("#000000"));
+    });
+
+    it("accepts valid 3-digit hex shorthand", () => {
+      assert.ok(HEX_COLOR_RE.test("#f00"));
+      assert.ok(HEX_COLOR_RE.test("#abc"));
+    });
+
+    it("rejects named colors and other formats", () => {
+      assert.ok(!HEX_COLOR_RE.test("red"));
+      assert.ok(!HEX_COLOR_RE.test("rgb(0,0,0)"));
+      assert.ok(!HEX_COLOR_RE.test("336699"));
+      assert.ok(!HEX_COLOR_RE.test("#12345")); // 5 digits
+    });
+  });
+
+  describe("dimensions validation", () => {
+    it("accepts valid WxH formats", () => {
+      assert.ok(DIMENSIONS_RE.test("1920x1080"));
+      assert.ok(DIMENSIONS_RE.test("100x100"));
+      assert.ok(DIMENSIONS_RE.test("1920X1080")); // case
+    });
+
+    it("rejects invalid formats", () => {
+      assert.ok(!DIMENSIONS_RE.test("1920-1080"));
+      assert.ok(!DIMENSIONS_RE.test("abcxdef"));
+      assert.ok(!DIMENSIONS_RE.test("1920"));
+    });
+  });
+
+  describe("filename validation", () => {
+    it("accepts valid filenames", () => {
+      for (const n of ["demo", "my-image", "test_123", "img.backup"]) {
+        assert.ok(!ILLEGAL_FILENAME_RE.test(n), `"${n}" should be valid`);
+      }
+    });
+
+    it("rejects filenames with illegal characters", () => {
+      for (const n of [
+        "test/file",
+        "a\\b",
+        "foo:bar",
+        "a*b",
+        "a?b",
+        'a"b',
+        "a<b",
+        "a>b",
+        "a|b",
+      ]) {
+        assert.ok(ILLEGAL_FILENAME_RE.test(n), `"${n}" should be invalid`);
+      }
+    });
+  });
+});

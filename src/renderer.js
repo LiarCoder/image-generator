@@ -71,10 +71,21 @@ export async function render(
   lines,
   format,
   quality = 80,
+  noiseBuffer = null, // pre-generated; reuse across iterations for determinism
 ) {
   const { r, g, b } = hexToRgb(bgColor);
 
-  const svgOverlay = buildSvgOverlay(width, height, textColor, lines);
+  const compositeInputs = [
+    {
+      input: buildSvgOverlay(width, height, textColor, lines),
+      top: 0,
+      left: 0,
+    },
+  ];
+  // Noise overlay makes lossy formats range-adjustable via quality
+  if (noiseBuffer) {
+    compositeInputs.unshift({ input: noiseBuffer, blend: "overlay" });
+  }
 
   const pipeline = sharp({
     create: {
@@ -83,7 +94,7 @@ export async function render(
       channels: 3,
       background: { r, g, b },
     },
-  }).composite([{ input: svgOverlay, top: 0, left: 0 }]);
+  }).composite(compositeInputs);
 
   if (format === "bmp") {
     const rawBuffer = await applyFormat(pipeline, format, quality).toBuffer();
@@ -91,6 +102,22 @@ export async function render(
   }
 
   return applyFormat(pipeline, format, quality).toBuffer();
+}
+
+/**
+ * Generate a random noise PNG buffer to overlay on lossy images.
+ * Generate ONCE per job and pass to render() to keep binary-search deterministic.
+ */
+export async function buildNoiseLayer(width, height) {
+  // Create random RGB noise data
+  const pixels = width * height * 3;
+  const data = Buffer.allocUnsafe(pixels);
+  for (let i = 0; i < pixels; i++) {
+    data[i] = Math.floor(Math.random() * 60); // low-amplitude noise (0-59)
+  }
+  return sharp(data, { raw: { width, height, channels: 3 } })
+    .png()
+    .toBuffer();
 }
 
 /**
