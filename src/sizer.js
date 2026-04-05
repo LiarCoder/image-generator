@@ -2,6 +2,7 @@ import {
   BYTES_PER_PIXEL,
   DEFAULT_ASPECT_RATIO,
   MIN_DIMENSION,
+  DIMENSIONS_RE,
 } from "./constants.js";
 
 /**
@@ -34,7 +35,7 @@ export function calculate(targetBytes, format) {
  * @returns {{ width: number, height: number }}
  */
 export function parseDimensions(dimensionStr) {
-  const m = dimensionStr.match(/^(\d+)x(\d+)$/i);
+  const m = dimensionStr.match(DIMENSIONS_RE);
   if (!m) throw new Error(`Invalid dimensions string: "${dimensionStr}"`);
   return { width: parseInt(m[1], 10), height: parseInt(m[2], 10) };
 }

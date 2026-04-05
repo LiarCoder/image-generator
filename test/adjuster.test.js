@@ -71,4 +71,78 @@ describe("adjuster", () => {
       );
     });
   });
+
+  describe("GIF (lossless)", () => {
+    it("stays within \u00b11 KB of 200 KB target", async () => {
+      const target = 200 * 1024;
+      const { buffer } = await makeAdjusted("gif", target);
+      const diff = Math.abs(buffer.length - target);
+      assert.ok(diff <= 1024, `GIF diff=${diff} exceeds \u00b11KB`);
+    });
+  });
+
+  describe("PNG shrink path (base larger than target)", () => {
+    it("shrinks and stays within \u00b11 KB when base exceeds target", async () => {
+      const { render: renderFn } = await import("../src/renderer.js");
+      const { adjust: adjustFn } = await import("../src/adjuster.js");
+
+      // Render at a sizeable canvas, then pad the buffer to guarantee it exceeds
+      // the target — this reliably exercises the shrinkAndRender code path.
+      const w = 800,
+        h = 600;
+      const target = 100 * 1024; // 100 KB
+      const lines = {
+        line1: "test.png",
+        line2: "100KB",
+        line3: `${w} \u00d7 ${h}`,
+      };
+      const base = await renderFn(w, h, BG, TEXT, lines, "png");
+      // Ensure the base is larger than target regardless of PNG compression ratio
+      const bigBase =
+        base.length > target
+          ? base
+          : Buffer.concat([
+              base,
+              Buffer.alloc(target - base.length + 1024, 0x41),
+            ]);
+      assert.ok(
+        bigBase.length > target,
+        "pre-condition: base must be larger than target",
+      );
+
+      const { buffer } = await adjustFn(
+        bigBase,
+        target,
+        "png",
+        w,
+        h,
+        BG,
+        TEXT,
+        lines,
+      );
+      const diff = Math.abs(buffer.length - target);
+      assert.ok(diff <= 1024, `shrink diff=${diff} exceeds \u00b11KB`);
+    });
+  });
+
+  describe("tiny target (near minimum dimensions)", () => {
+    it("PNG: handles very small target without crashing", async () => {
+      const target = 15 * 1024; // 15 KB — forces 100x100-ish canvas
+      const { buffer, width, height } = await makeAdjusted("png", target);
+      assert.ok(buffer.length > 0, "should produce a non-empty buffer");
+      assert.ok(width >= 100, `width ${width} < minimum 100`);
+      assert.ok(height >= 100, `height ${height} < minimum 100`);
+      // Best-effort tolerance for tiny images: ±5 KB
+      const diff = Math.abs(buffer.length - target);
+      assert.ok(diff <= 5 * 1024, `tiny PNG diff=${diff} is too large`);
+    });
+
+    it("JPG: handles very small target without crashing", async () => {
+      const target = 20 * 1024; // 20 KB
+      const { buffer, width, height } = await makeAdjusted("jpg", target);
+      assert.ok(buffer.length > 0);
+      assert.ok(width >= 100);
+      assert.ok(height >= 100);
+    });
+  });
 });

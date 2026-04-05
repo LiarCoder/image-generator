@@ -9,6 +9,9 @@ import {
   DEFAULT_UNIT,
   MAX_FILE_SIZE_BYTES,
   EXIT_CODES,
+  HEX_COLOR_RE,
+  DIMENSIONS_RE,
+  ILLEGAL_FILENAME_RE,
 } from "./constants.js";
 import * as logger from "./logger.js";
 import { generate } from "./generator.js";
@@ -17,11 +20,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(
   readFileSync(resolve(__dirname, "../package.json"), "utf8"),
 );
-
-const HEX_COLOR_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-const DIMENSIONS_RE = /^(\d+)x(\d+)$/i;
-// Windows and POSIX illegal filename characters
-const ILLEGAL_FILENAME_RE = /[\\/:*?"<>|]/;
 
 function die(message) {
   logger.error(message, EXIT_CODES.PARAM_ERROR);
