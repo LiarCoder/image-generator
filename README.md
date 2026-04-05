@@ -1,6 +1,8 @@
 # imgen
 
-[English](./README.md) | 简体中文
+[![npm](https://img.shields.io/npm/v/%40liarcoder%2Fimage-generator.svg)](https://www.npmjs.com/package/@liarcoder/image-generator)
+
+[English](./README-en_us.md) | 简体中文
 
 一个可以生成**精确目标文件大小**的命令行工具。
 
@@ -15,6 +17,26 @@
 - Node.js **≥ 18**
 
 ## 安装
+
+### 从 npm 安装（推荐）
+
+```bash
+npm i @liarcoder/image-generator
+```
+
+若要在任意目录直接使用 `imgen` 命令，请全局安装：
+
+```bash
+npm i -g @liarcoder/image-generator
+```
+
+也可以直接使用 `npx` 运行：
+
+```bash
+npx @liarcoder/image-generator
+```
+
+### 从源码安装
 
 ```bash
 # 克隆仓库并安装依赖

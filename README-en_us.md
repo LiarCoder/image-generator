@@ -1,6 +1,8 @@
 # imgen
 
-English | [简体中文](./README-zh_cn.md)
+[![npm](https://img.shields.io/npm/v/%40liarcoder%2Fimage-generator.svg)](https://www.npmjs.com/package/@liarcoder/image-generator)
+
+English | [简体中文](./README.md)
 
 CLI tool that generates images with a **precise target file size**.
 
@@ -18,6 +20,26 @@ hit the requested byte count accurately via quality-parameter binary search.
 - Node.js **≥ 18**
 
 ## Installation
+
+### From npm (recommended)
+
+```bash
+npm i @liarcoder/image-generator
+```
+
+To use the `imgen` command from any directory, install globally:
+
+```bash
+npm i -g @liarcoder/image-generator
+```
+
+You can also run it directly with `npx`:
+
+```bash
+npx @liarcoder/image-generator
+```
+
+### From source
 
 ```bash
 # Clone and install dependencies
