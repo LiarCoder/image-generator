@@ -4,11 +4,29 @@
 
 [English](./docs/README-en_us.md) | 简体中文 | [更新日志](./CHANGELOG.md)
 
+## 功能简介
+
+> 详细参数说明请参考 [选项](#选项)
+
 一个可以生成**指定文件大小**的命令行工具。
 
-支持的格式：**PNG · JPG · WEBP · BMP · GIF**
+1. 支持指定生成图片的格式：
 
-每张图片都会填充随机柔和的背景色、自动对比度的文字叠加层（显示文件名、目标大小和像素尺寸），以及（针对有损格式）一层微妙的噪点，使 JPEG/WEBP 编码器能够通过质量参数二分搜索精确命中目标字节数。
+- PNG
+- JPG
+- WEBP
+- BMP
+- GIF
+
+2. 支持指定生成图片的文件大小
+3. 支持指定生成图片的文件名
+4. 支持指定生成图片的输出目录
+5. 支持指定生成图片的像素尺寸
+6. 支持指定生成图片的复制到剪切板
+   1. 支持 Windows / macOS
+   2. Windows 下 `webp` 输出会告警并跳过复制（文件仍正常保存）
+7. 支持指定生成图片的背景色 & 文字颜色
+   1. 每张图片都会填充随机柔和的背景色、自动对比度的文字叠加层（显示文件名、目标大小和像素尺寸），以及（针对有损格式）一层微妙的噪点，使 JPEG/WEBP 编码器能够通过质量参数二分搜索精确命中目标字节数。
 
 ---
 
@@ -66,9 +84,9 @@ imgen -s <size> [options]
 | `-d <WxH>`           | `--dimensions`        | 像素尺寸，如 `1920x1080`                    | 自动计算         |
 | `--bg-color <hex>`   |                       | 背景颜色，如 `#336699`                      | 随机柔和色       |
 | `--text-color <hex>` |                       | 文字颜色，如 `#FFFFFF`                      | 自动 WCAG 对比度 |
-| `--verbose`          |                       | 显示详细进度信息                            | 关闭                |
+| `--verbose`          |                       | 显示详细进度信息                            | 关闭             |
 | `-c`                 | `--copy-to-clipboard` | 生成后复制图片到系统剪切板（Windows/macOS） | 关闭             |
-| `--quiet`            |                       | 安静模式，仅输出文件路径                    | 关闭                |
+| `--quiet`            |                       | 安静模式，仅输出文件路径                    | 关闭             |
 | `-v`                 | `--version`           | 显示版本号                                  | —                |
 | `-h`                 | `--help`              | 显示帮助信息                                | —                |
 
@@ -225,22 +243,36 @@ npm run prepare
 
 ```
 bin/
-  imgen.js          入口文件（shebang 包装器）
+  └──imgen.js          入口文件（shebang 包装器）
 src/
-  cli.js            参数解析与验证（commander）
-  generator.js      主流程编排
-  sizer.js          根据目标字节数自动计算像素尺寸
-  color.js          随机柔和 HSL 颜色 + WCAG 对比度文字
-  renderer.js       基于 sharp 的渲染，含 SVG 文字叠加
-  adjuster.js       精确大小调整（填充 / 质量二分搜索）
-  output.js         文件写入 + 冲突处理
-  logger.js         三种输出模式（普通 / 详细 / 安静）
-  constants.js      共享常量
+  ├──core/
+  │  ├──cli.js          参数解析与验证（commander）
+  │  ├──generator.js    主流程编排
+  │  ├──sizer.js        根据目标字节数自动计算像素尺寸
+  │  ├──renderer.js     基于 sharp 的渲染，含 SVG 文字叠加
+  │  ├──adjuster.js     精确大小调整（填充 / 质量二分搜索）
+  │  └──output.js       文件写入 + 冲突处理
+  ├──utils/
+  │  ├──color.js        随机柔和 HSL 颜色 + WCAG 对比度文字
+  │  ├──logger.js       三种输出模式（普通 / 详细 / 安静）
+  │  └──clipboard.js    剪切板复制能力（Windows / macOS）
+  └──constants/
+     └──index.js        共享常量
+scripts/
+  ├──run-node-tests.mjs 运行 Node.js 测试
+  └──extract-changelog.mjs 提取更新日志
 test/
-  cli.test.js
-  sizer.test.js
-  color.test.js
-  adjuster.test.js
+  ├──core/
+  │  ├──cli.test.js
+  │  ├──generator.test.js
+  │  ├──sizer.test.js
+  │  ├──renderer.test.js
+  │  ├──adjuster.test.js
+  │  └──output.test.js
+  └──utils/
+     ├──color.test.js
+     └──clipboard.test.js
+docs/
 ```
 
 ---
