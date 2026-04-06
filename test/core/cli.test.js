@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { describe, it } from 'node:test';
+import { mkdirSync, rmSync } from 'node:fs';
+import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SUPPORTED_FORMATS,
@@ -10,7 +11,7 @@ import {
   DIMENSIONS_RE,
   ILLEGAL_FILENAME_RE,
   EXIT_CODES,
-} from '../src/constants/index.js';
+} from '../../src/constants/index.js';
 
 /**
  * CLI validation tests.
@@ -19,7 +20,11 @@ import {
  */
 
 const testDir = dirname(fileURLToPath(import.meta.url));
-const imgenBin = join(testDir, '..', 'bin', 'imgen.js');
+const imgenBin = join(testDir, '..', '..', 'bin', 'imgen.js');
+const cliTmpDir = join(testDir, '..', '..', 'temp', 'cli-test-tmp');
+
+before(() => mkdirSync(cliTmpDir, { recursive: true }));
+after(() => rmSync(cliTmpDir, { recursive: true, force: true }));
 
 function runImgen(args = []) {
   return spawnSync(process.execPath, [imgenBin, ...args], {
@@ -47,6 +52,12 @@ describe('CLI run', () => {
     const r = runImgen(['-v']);
     assert.equal(r.status, 0);
     assert.match(r.stdout, /\d+\.\d+\.\d+/);
+  });
+
+  it('accepts -c/--copy-to-clipboard flag', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '-f', 'png', '-c', '--quiet', '-o', cliTmpDir]);
+    assert.equal(r.status, 0);
+    assert.ok(r.stdout.trim().length > 0);
   });
 });
 

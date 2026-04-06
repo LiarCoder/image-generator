@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { OutputWriter } from '../src/core/output.js';
+import { OutputWriter } from '../../src/core/output.js';
 
 const { buildDefaultName, nextAvailablePath } = OutputWriter;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const TMP = join(__dirname, '..', 'temp', 'output-test-tmp');
+const TMP = join(__dirname, '..', '..', 'temp', 'output-test-tmp');
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 

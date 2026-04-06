@@ -77,6 +77,7 @@ export function run() {
       'Text color as hex, e.g. #FFFFFF. (default: auto WCAG contrast)',
     )
     .option('--verbose', 'Verbose output', false)
+    .option('-c, --copy-to-clipboard', 'Copy the generated image to clipboard after saving', false)
     .option('--quiet', 'Quiet mode; print only the output file path', false);
 
   program.parse(process.argv);
@@ -151,6 +152,7 @@ export function run() {
     dimensions,
     bgColor: opts.bgColor ?? null,
     textColor: opts.textColor ?? null,
+    copyToClipboard: opts.copyToClipboard,
   }).catch((err) => {
     logger.error(err.message, EXIT_CODES.GENERATION_ERROR);
   });

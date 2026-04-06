@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.2] - 2026-04-06
+
+### Added
+
+- **Optional clipboard copy support**
+  - Added `-c, --copy-to-clipboard`: after writing the image file, the CLI attempts to copy it to the system clipboard
+  - Supported platforms: Windows / macOS; unsupported platforms warn and skip clipboard copy (generation still succeeds)
+  - On Windows, `webp` output warns and skips clipboard copy (file is still saved)
+  - Added `test/clipboard.test.js` and extended CLI coverage for the `-c` flag
+
 ## [2.0.1] - 2026-04-06
 
 ### Refactored

@@ -4,14 +4,27 @@
 
 English | [简体中文](../README.md) | [Changelog](./CHANGELOG-en_us.md)
 
-CLI tool that generates images with a **precise target file size**.
+## Features
 
-Supported formats: **PNG · JPG · WEBP · BMP · GIF**
+> For detailed parameter descriptions, please refer to [Options](#options).
 
-Each image is filled with a random muted background color, an auto-contrast
-text overlay showing the filename, target size, and pixel dimensions, and
-(for lossy formats) a subtle noise layer that allows the JPEG/WEBP encoder to
-hit the requested byte count accurately via quality-parameter binary search.
+A CLI tool that generates images with a **specified file size**.
+
+1. Supported formats:
+   - PNG
+   - JPG
+   - WEBP
+   - BMP
+   - GIF
+2. Supported file size
+3. Supported file name
+4. Supported output directory
+5. Supported pixel dimensions
+6. Supported copy to clipboard
+   1. Supported Windows / macOS
+   2. On Windows, `webp` output will warn and skip copy (file is still saved normally)
+7. Supported background color & text color
+   1. Each image will be filled with a random muted background color and an auto-contrast text overlay layer (showing the filename, target size, and pixel dimensions), and a subtle noise layer (for lossy formats) that allows the JPEG/WEBP encoder to hit the requested byte count accurately via quality-parameter binary search.
 
 ---
 
@@ -59,20 +72,21 @@ imgen -s <size> [options]
 
 ### Options
 
-| Flag                 | Alias          | Description                                   | Default            |
-| -------------------- | -------------- | --------------------------------------------- | ------------------ |
-| `-s <number>`        | `--size`       | Target file size **(required)**               | —                  |
-| `-u <unit>`          | `--unit`       | Unit: `KB` or `MB`                            | `MB`               |
-| `-f <type>`          | `--format`     | Output format: `png` `jpg` `webp` `bmp` `gif` | `png`              |
-| `-n <name>`          | `--name`       | Output filename (no extension)                | auto-generated     |
-| `-o <dir>`           | `--output`     | Output directory                              | current directory  |
-| `-d <WxH>`           | `--dimensions` | Pixel dimensions, e.g. `1920x1080`            | auto-calculated    |
-| `--bg-color <hex>`   |                | Background color, e.g. `#336699`              | random muted color |
-| `--text-color <hex>` |                | Text color, e.g. `#FFFFFF`                    | auto WCAG contrast |
-| `--verbose`          |                | Show detailed progress                        | —                  |
-| `--quiet`            |                | Print only the output file path               | —                  |
-| `-v`                 | `--version`    | Show version                                  | —                  |
-| `-h`                 | `--help`       | Show help                                     | —                  |
+| Flag                 | Alias                 | Description                                              | Default            |
+| -------------------- | --------------------- | -------------------------------------------------------- | ------------------ |
+| `-s <number>`        | `--size`              | Target file size **(required)**                          | —                  |
+| `-u <unit>`          | `--unit`              | Unit: `KB` or `MB`                                       | `MB`               |
+| `-f <type>`          | `--format`            | Output format: `png` `jpg` `webp` `bmp` `gif`            | `png`              |
+| `-n <name>`          | `--name`              | Output filename (no extension)                           | auto-generated     |
+| `-o <dir>`           | `--output`            | Output directory                                         | current directory  |
+| `-d <WxH>`           | `--dimensions`        | Pixel dimensions, e.g. `1920x1080`                       | auto-calculated    |
+| `--bg-color <hex>`   |                       | Background color, e.g. `#336699`                         | random muted color |
+| `--text-color <hex>` |                       | Text color, e.g. `#FFFFFF`                               | auto WCAG contrast |
+| `--verbose`          |                       | Show detailed progress                                   | —                  |
+| `-c`                 | `--copy-to-clipboard` | Copy generated image to system clipboard (Windows/macOS) | off                |
+| `--quiet`            |                       | Print only the output file path                          | —                  |
+| `-v`                 | `--version`           | Show version                                             | —                  |
+| `-h`                 | `--help`              | Show help                                                | —                  |
 
 `--verbose` and `--quiet` are mutually exclusive.
 
@@ -82,6 +96,8 @@ imgen -s <size> [options]
 - Minimum image dimension: **100 px** on either side
 - When `-d` conflicts with the target size, **size takes priority** and dimensions are used only as a starting reference
 - Filename characters `\ / : * ? " < > |` are not allowed
+- `--copy-to-clipboard` supports **Windows / macOS** only; unsupported platforms warn and skip clipboard copy
+- On Windows, `webp` output is not copied to clipboard (warn and skip)
 
 ---
 
@@ -124,9 +140,19 @@ echo "Generated: $OUTPUT"
 imgen -s 3 -f jpg --verbose
 ```
 
+### Copy to clipboard
+
+```bash
+# Generate and copy to clipboard
+imgen -s 1 -f png -c
+
+# On Windows, WEBP copy is skipped but file is still saved
+imgen -s 1 -f webp -c
+```
+
 ### Output previews
 
-<details>
+<details open>
 <summary>Click to see example images</summary>
 
 | Example          | Command                                                                      | Output                                                |
@@ -217,22 +243,36 @@ On commit, `husky + lint-staged` now automatically lint and format staged files.
 
 ```
 bin/
-  imgen.js          entry point (shebang wrapper)
+  └──imgen.js          entry point (shebang wrapper)
 src/
-  cli.js            argument parsing & validation (commander)
-  generator.js      main orchestration pipeline
-  sizer.js          auto-calculate pixel dimensions from byte target
-  color.js          random muted HSL colors + WCAG contrast text
-  renderer.js       sharp-based rendering with SVG text overlay
-  adjuster.js       precise size adjustment (pad / binary-search quality)
-  output.js         file writing + collision handling
-  logger.js         three-mode output (normal / verbose / quiet)
-  constants.js      shared constants
+  ├──core/
+  │  ├──cli.js          argument parsing & validation (commander)
+  │  ├──generator.js    main orchestration pipeline
+  │  ├──sizer.js        auto-calculate pixel dimensions from byte target
+  │  ├──renderer.js     sharp-based rendering with SVG text overlay
+  │  ├──adjuster.js     precise size adjustment (pad / binary-search quality)
+  │  └──output.js       file writing + collision handling
+  ├──utils/
+  │  ├──color.js        random muted HSL colors + WCAG contrast text
+  │  ├──logger.js       three-mode output (normal / verbose / quiet)
+  │  └──clipboard.js    clipboard copy support (Windows / macOS)
+  └──constants/
+     └──index.js        shared constants
+scripts/
+  ├──run-node-tests.mjs  run Node.js tests
+  └──extract-changelog.mjs extract changelog
 test/
-  cli.test.js
-  sizer.test.js
-  color.test.js
-  adjuster.test.js
+  ├──core/
+  │  ├──cli.test.js
+  │  ├──generator.test.js
+  │  ├──sizer.test.js
+  │  ├──renderer.test.js
+  │  ├──adjuster.test.js
+  │  └──output.test.js
+  └──utils/
+     ├──color.test.js
+     └──clipboard.test.js
+docs/
 ```
 
 ---
