@@ -4,7 +4,7 @@ import { ImageRenderer } from './renderer.js';
 import { SizeAdjuster } from './adjuster.js';
 import { OutputWriter } from './output.js';
 import { logger } from '../utils/logger.js';
-import { copyImageToClipboard } from '../utils/clipboard.js';
+import { clipboardProcessor } from '../utils/clipboard.js';
 
 /**
  * End-to-end image generation orchestration.
@@ -115,7 +115,7 @@ export class ImageGenerator {
     logger.success(filePath, finalBuffer.length, finalWidth, finalHeight);
 
     if (options.copyToClipboard) {
-      const copied = await copyImageToClipboard(filePath, format);
+      const copied = await clipboardProcessor.copyImageToClipboard(filePath, format);
       if (copied) {
         logger.info('Image copied to clipboard.');
       }

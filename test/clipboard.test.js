@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { copyImageToClipboard } from '../src/utils/clipboard.js';
+import { clipboardProcessor } from '../src/utils/clipboard.js';
 import { logger } from '../src/utils/logger.js';
 
 describe('clipboard utility', () => {
@@ -22,7 +22,7 @@ describe('clipboard utility', () => {
       return { stdout: '', stderr: '' };
     };
 
-    const result = await copyImageToClipboard('C:\\temp\\out.png', 'png', {
+    const result = await clipboardProcessor.copyImageToClipboard('C:\\temp\\out.png', 'png', {
       execAsync,
       platform: 'win32',
     });
@@ -41,7 +41,7 @@ describe('clipboard utility', () => {
       return { stdout: '', stderr: '' };
     };
 
-    const result = await copyImageToClipboard('C:\\temp\\out.webp', 'webp', {
+    const result = await clipboardProcessor.copyImageToClipboard('C:\\temp\\out.webp', 'webp', {
       execAsync,
       platform: 'win32',
     });
@@ -57,7 +57,7 @@ describe('clipboard utility', () => {
       return { stdout: '', stderr: '' };
     };
 
-    const result = await copyImageToClipboard('/tmp/out.png', 'png', {
+    const result = await clipboardProcessor.copyImageToClipboard('/tmp/out.png', 'png', {
       execAsync,
       platform: 'darwin',
     });
@@ -76,7 +76,7 @@ describe('clipboard utility', () => {
       return { stdout: '', stderr: '' };
     };
 
-    const result = await copyImageToClipboard('/tmp/out.webp', 'webp', {
+    const result = await clipboardProcessor.copyImageToClipboard('/tmp/out.webp', 'webp', {
       execAsync,
       platform: 'darwin',
     });
@@ -93,7 +93,7 @@ describe('clipboard utility', () => {
       return { stdout: '', stderr: '' };
     };
 
-    const result = await copyImageToClipboard('/tmp/out.png', 'png', {
+    const result = await clipboardProcessor.copyImageToClipboard('/tmp/out.png', 'png', {
       execAsync,
       platform: 'linux',
     });
@@ -107,7 +107,7 @@ describe('clipboard utility', () => {
       throw new Error('boom');
     };
 
-    const result = await copyImageToClipboard('/tmp/out.png', 'png', {
+    const result = await clipboardProcessor.copyImageToClipboard('/tmp/out.png', 'png', {
       execAsync,
       platform: 'darwin',
     });
