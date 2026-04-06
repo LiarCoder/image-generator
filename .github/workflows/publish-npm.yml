@@ -1,9 +1,15 @@
 # Merge / push to main → test + lint → publish to npm (only if package.json version is new on registry).
 #
-# Setup (one-time on GitHub):
-# 1. npm: create an Automation token (or granular token with publish) at https://www.npmjs.com/
-# 2. Repo → Settings → Secrets and variables → Actions → New repository secret
-#    Name: NPM_TOKEN   Value: <token>
+# Publishing uses npm Trusted Publishing (OIDC) — no long-lived NPM_TOKEN in GitHub Secrets.
+# Docs: https://docs.npmjs.com/trusted-publishers
+#
+# One-time setup on npmjs.com (per package):
+# 1. Open the package → Settings → Trusted publishing → GitHub Actions.
+# 2. Fill Organization/user, Repository, and Workflow filename exactly: publish-npm.yml
+#    (filename only, case-sensitive, must exist under .github/workflows/).
+# 3. Save. Ensure package.json "repository.url" matches this GitHub repo URL exactly.
+#
+# Requirements (per npm): Node ≥ 22.14, npm CLI ≥ 11.5.1 — use Node 24 on the runner.
 
 name: Publish npm
 
@@ -14,6 +20,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write # required for OIDC → npm trusted publishing
 
 jobs:
   publish:
@@ -23,7 +30,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
@@ -48,8 +55,6 @@ jobs:
             echo "Version ${VER} not on registry; will publish."
           fi
 
-      - name: Publish to npm
+      - name: Publish to npm (OIDC)
         if: steps.version.outputs.skip == 'false'
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
