@@ -143,6 +143,20 @@ class Logger {
   }
 
   /**
+   * Print informational message.
+   *
+   * @param {string} message
+   * @returns {void}
+   */
+  info(message) {
+    if (this.mode === 'quiet') {
+      return;
+    }
+    this.stopSpinner();
+    console.log(chalk.cyan(`ℹ️  ${message}`));
+  }
+
+  /**
    * Print debug message in verbose mode only.
    *
    * @param {string} message

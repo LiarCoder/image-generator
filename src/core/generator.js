@@ -4,6 +4,7 @@ import { ImageRenderer } from './renderer.js';
 import { SizeAdjuster } from './adjuster.js';
 import { OutputWriter } from './output.js';
 import { logger } from '../utils/logger.js';
+import { copyImageToClipboard } from '../utils/clipboard.js';
 
 /**
  * End-to-end image generation orchestration.
@@ -70,6 +71,7 @@ export class ImageGenerator {
    *   dimensions: {width:number,height:number}|null,
    *   bgColor: string|null,
    *   textColor: string|null,
+   *   copyToClipboard: boolean,
    * }} options
    */
   static async generate(options) {
@@ -111,5 +113,12 @@ export class ImageGenerator {
     const filePath = await OutputWriter.save(finalBuffer, options);
 
     logger.success(filePath, finalBuffer.length, finalWidth, finalHeight);
+
+    if (options.copyToClipboard) {
+      const copied = await copyImageToClipboard(filePath, format);
+      if (copied) {
+        logger.info('Image copied to clipboard.');
+      }
+    }
   }
 }

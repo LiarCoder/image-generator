@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **复制到剪切板（可选）**
+  - 新增 `-c, --copy-to-clipboard` 参数：图片写盘后尝试复制到系统剪切板
+  - 支持平台：Windows / macOS；不支持平台仅告警并跳过（不影响生成成功）
+  - Windows 下 `webp` 输出会告警并跳过复制（文件仍正常保存）
+  - 新增 `test/clipboard.test.js`，并补充 CLI 对 `-c` 参数的覆盖
 - **Git hooks**
   - `pre-commit`：`lint-staged`（暂存文件自动 eslint --fix + prettier）
   - `pre-push`：`npm run test`（推送前必须通过全量单元测试）

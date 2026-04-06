@@ -59,20 +59,21 @@ imgen -s <size> [options]
 
 ### Options
 
-| Flag                 | Alias          | Description                                   | Default            |
-| -------------------- | -------------- | --------------------------------------------- | ------------------ |
-| `-s <number>`        | `--size`       | Target file size **(required)**               | —                  |
-| `-u <unit>`          | `--unit`       | Unit: `KB` or `MB`                            | `MB`               |
-| `-f <type>`          | `--format`     | Output format: `png` `jpg` `webp` `bmp` `gif` | `png`              |
-| `-n <name>`          | `--name`       | Output filename (no extension)                | auto-generated     |
-| `-o <dir>`           | `--output`     | Output directory                              | current directory  |
-| `-d <WxH>`           | `--dimensions` | Pixel dimensions, e.g. `1920x1080`            | auto-calculated    |
-| `--bg-color <hex>`   |                | Background color, e.g. `#336699`              | random muted color |
-| `--text-color <hex>` |                | Text color, e.g. `#FFFFFF`                    | auto WCAG contrast |
-| `--verbose`          |                | Show detailed progress                        | —                  |
-| `--quiet`            |                | Print only the output file path               | —                  |
-| `-v`                 | `--version`    | Show version                                  | —                  |
-| `-h`                 | `--help`       | Show help                                     | —                  |
+| Flag                 | Alias                 | Description                                              | Default            |
+| -------------------- | --------------------- | -------------------------------------------------------- | ------------------ |
+| `-s <number>`        | `--size`              | Target file size **(required)**                          | —                  |
+| `-u <unit>`          | `--unit`              | Unit: `KB` or `MB`                                       | `MB`               |
+| `-f <type>`          | `--format`            | Output format: `png` `jpg` `webp` `bmp` `gif`            | `png`              |
+| `-n <name>`          | `--name`              | Output filename (no extension)                           | auto-generated     |
+| `-o <dir>`           | `--output`            | Output directory                                         | current directory  |
+| `-d <WxH>`           | `--dimensions`        | Pixel dimensions, e.g. `1920x1080`                       | auto-calculated    |
+| `--bg-color <hex>`   |                       | Background color, e.g. `#336699`                         | random muted color |
+| `--text-color <hex>` |                       | Text color, e.g. `#FFFFFF`                               | auto WCAG contrast |
+| `--verbose`          |                       | Show detailed progress                                   | —                  |
+| `-c`                 | `--copy-to-clipboard` | Copy generated image to system clipboard (Windows/macOS) | off                |
+| `--quiet`            |                       | Print only the output file path                          | —                  |
+| `-v`                 | `--version`           | Show version                                             | —                  |
+| `-h`                 | `--help`              | Show help                                                | —                  |
 
 `--verbose` and `--quiet` are mutually exclusive.
 
@@ -82,6 +83,8 @@ imgen -s <size> [options]
 - Minimum image dimension: **100 px** on either side
 - When `-d` conflicts with the target size, **size takes priority** and dimensions are used only as a starting reference
 - Filename characters `\ / : * ? " < > |` are not allowed
+- `--copy-to-clipboard` supports **Windows / macOS** only; unsupported platforms warn and skip clipboard copy
+- On Windows, `webp` output is not copied to clipboard (warn and skip)
 
 ---
 
@@ -122,6 +125,16 @@ echo "Generated: $OUTPUT"
 
 ```bash
 imgen -s 3 -f jpg --verbose
+```
+
+### Copy to clipboard
+
+```bash
+# Generate and copy to clipboard
+imgen -s 1 -f png -c
+
+# On Windows, WEBP copy is skipped but file is still saved
+imgen -s 1 -f webp -c
 ```
 
 ### Output previews
