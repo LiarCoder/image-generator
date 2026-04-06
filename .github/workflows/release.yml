@@ -1,0 +1,91 @@
+# On push of tag v*, if no GitHub Release exists for that tag yet, create one.
+# Body: CHANGELOG.md section for the semver + GitHub auto-generated notes (no .github/release.yml required).
+#
+# workflow_dispatch: create/update release body for an existing tag (still skips if release already exists).
+
+name: GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag name, e.g. v2.0.1
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+# secrets.GITHUB_TOKEN is injected by GitHub Actions for each run — do not add it under repo Secrets.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag name
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            T="${{ inputs.tag }}"
+          else
+            T="${{ github.ref_name }}"
+          fi
+          case "$T" in
+            v*) ;;
+            *)
+              echo "Tag must start with v (got: $T)"
+              exit 1
+              ;;
+          esac
+          echo "tag=$T" >> "$GITHUB_OUTPUT"
+          echo "version=${T#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.tag.outputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Skip if release already exists for this tag
+        id: guard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Release for $TAG already exists; skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "No release for $TAG yet; will create."
+          fi
+
+      - name: Build release body from CHANGELOG.md
+        id: changelog
+        if: steps.guard.outputs.skip == 'false'
+        run: |
+          VER="${{ steps.tag.outputs.version }}"
+          {
+            echo 'release_body<<CHANGELOG_BODY'
+            node scripts/extract-changelog.mjs "$VER"
+            printf '\n\n---\n\n'
+            printf '完整变更记录见 [CHANGELOG.md](%s/%s/blob/main/CHANGELOG.md)。\n' "${{ github.server_url }}" "${{ github.repository }}"
+            echo 'CHANGELOG_BODY'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: steps.guard.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          body: ${{ steps.changelog.outputs.release_body }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
