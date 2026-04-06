@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { SizeAdjuster } from '../src/core/adjuster.js';
-import { ImageRenderer } from '../src/core/renderer.js';
-import { ImageSizer } from '../src/core/sizer.js';
+import { SizeAdjuster } from '../../src/core/adjuster.js';
+import { ImageRenderer } from '../../src/core/renderer.js';
+import { ImageSizer } from '../../src/core/sizer.js';
 
 const { adjust } = SizeAdjuster;
 const { render } = ImageRenderer;
@@ -87,8 +87,8 @@ describe('adjuster', () => {
 
   describe('PNG shrink path (base larger than target)', () => {
     it('shrinks and stays within \u00b11 KB when base exceeds target', async () => {
-      const { ImageRenderer: Renderer } = await import('../src/core/renderer.js');
-      const { SizeAdjuster: Adjuster } = await import('../src/core/adjuster.js');
+      const { ImageRenderer: Renderer } = await import('../../src/core/renderer.js');
+      const { SizeAdjuster: Adjuster } = await import('../../src/core/adjuster.js');
       const renderFn = Renderer.render.bind(Renderer);
       const adjustFn = Adjuster.adjust.bind(Adjuster);
 

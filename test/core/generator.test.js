@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { ImageGenerator } from '../src/core/generator.js';
+import { ImageGenerator } from '../../src/core/generator.js';
 
 const { buildDisplayName, buildOverlayLines, getToleranceBytes } = ImageGenerator;
 

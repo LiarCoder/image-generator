@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { ImageRenderer } from '../src/core/renderer.js';
+import { ImageRenderer } from '../../src/core/renderer.js';
 
 const { render, buildNoiseLayer, applyFormat, rawToBmp } = ImageRenderer;
 

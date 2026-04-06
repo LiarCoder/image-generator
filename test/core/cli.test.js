@@ -11,7 +11,7 @@ import {
   DIMENSIONS_RE,
   ILLEGAL_FILENAME_RE,
   EXIT_CODES,
-} from '../src/constants/index.js';
+} from '../../src/constants/index.js';
 
 /**
  * CLI validation tests.
@@ -20,8 +20,8 @@ import {
  */
 
 const testDir = dirname(fileURLToPath(import.meta.url));
-const imgenBin = join(testDir, '..', 'bin', 'imgen.js');
-const cliTmpDir = join(testDir, '..', 'temp', 'cli-test-tmp');
+const imgenBin = join(testDir, '..', '..', 'bin', 'imgen.js');
+const cliTmpDir = join(testDir, '..', '..', 'temp', 'cli-test-tmp');
 
 before(() => mkdirSync(cliTmpDir, { recursive: true }));
 after(() => rmSync(cliTmpDir, { recursive: true, force: true }));

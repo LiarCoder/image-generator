@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { clipboardProcessor } from '../src/utils/clipboard.js';
-import { logger } from '../src/utils/logger.js';
+import { clipboardProcessor } from '../../src/utils/clipboard.js';
+import { logger } from '../../src/utils/logger.js';
 
 describe('clipboard utility', () => {
   let originalMode;

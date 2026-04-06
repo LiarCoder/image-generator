@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { colorProcessor } from '../src/utils/color.js';
+import { colorProcessor } from '../../src/utils/color.js';
 
 describe('color', () => {
   describe('hexToRgb()', () => {
