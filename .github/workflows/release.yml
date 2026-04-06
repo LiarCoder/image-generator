@@ -1,5 +1,6 @@
 # On push of tag v*, if no GitHub Release exists for that tag yet, create one.
-# Body: CHANGELOG.md section for the semver + GitHub auto-generated notes (no .github/release.yml required).
+# Body: CHANGELOG.md section (via scripts/extract-changelog.mjs when available) + GitHub auto-generated notes.
+# If the extractor script is missing or fails, body is left empty and only GitHub-generated notes are used.
 #
 # workflow_dispatch: create/update release body for an existing tag (still skips if release already exists).
 
@@ -66,17 +67,48 @@ jobs:
             echo "No release for $TAG yet; will create."
           fi
 
-      - name: Build release body from CHANGELOG.md
+      - name: Prepare release body (optional CHANGELOG extract)
         id: changelog
         if: steps.guard.outputs.skip == 'false'
         run: |
+          set -u
           VER="${{ steps.tag.outputs.version }}"
+          DEFAULT="${{ github.event.repository.default_branch }}"
+          SCRIPT="scripts/extract-changelog.mjs"
+          USE_EXTRACT=0
+
+          if [ -f "$SCRIPT" ]; then
+            USE_EXTRACT=1
+          else
+            git fetch origin "$DEFAULT" --depth 1 || true
+            mkdir -p scripts
+            if git show "origin/${DEFAULT}:scripts/extract-changelog.mjs" > "$SCRIPT" 2>/dev/null && [ -s "$SCRIPT" ]; then
+              USE_EXTRACT=1
+            else
+              rm -f "$SCRIPT"
+            fi
+          fi
+
+          SECTION=""
+          if [ "$USE_EXTRACT" -eq 1 ]; then
+            if SECTION="$(node "$SCRIPT" "$VER")"; then
+              :
+            else
+              echo "::notice::CHANGELOG extractor failed; using GitHub-generated release notes only."
+              USE_EXTRACT=0
+            fi
+          else
+            echo "::notice::No scripts/extract-changelog.mjs; using GitHub-generated release notes only."
+          fi
+
           {
-            echo 'release_body<<CHANGELOG_BODY'
-            node scripts/extract-changelog.mjs "$VER"
-            printf '\n\n---\n\n'
-            printf '完整变更记录见 [CHANGELOG.md](%s/%s/blob/main/CHANGELOG.md)。\n' "${{ github.server_url }}" "${{ github.repository }}"
-            echo 'CHANGELOG_BODY'
+            echo 'release_body<<EOF_RELEASE_NOTES'
+            if [ "$USE_EXTRACT" -eq 1 ]; then
+              printf '%s\n' "$SECTION"
+              printf '\n\n---\n\n'
+              printf '完整变更记录见 [CHANGELOG.md](%s/%s/blob/%s/CHANGELOG.md)。\n' "${{ github.server_url }}" "${{ github.repository }}" "$DEFAULT"
+            fi
+            echo 'EOF_RELEASE_NOTES'
           } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
