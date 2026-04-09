@@ -2,12 +2,22 @@
 
 [English](./docs/CHANGELOG-en_us.md) | 简体中文
 
-All notable changes to this project will be documented in this file.
+本文件将记录该项目所有重要变更。
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+变更记录格式遵循 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
+且本项目遵循 [语义化版本规范（Semantic Versioning）](https://semver.org/spec/v2.0.0.html)。
 
 ---
+
+## [2.1.0] - 2026-04-09
+
+### Added
+
+- **内置图片体积上限上调至500MB**
+  - 原上限为50MB，现已提升至500MB
+  - 由于上调了体积上限，所以同步上调了二分搜索最大迭代层至 30 次（原先是 20 次）
+- **新增 `--no-save` 参数**
+  - 新增 `--no-save` 参数：生成后不保存到磁盘（必须与 `-c, --copy-to-clipboard` 一起使用）
 
 ## [2.0.2] - 2026-04-06
 

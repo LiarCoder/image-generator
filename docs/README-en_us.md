@@ -4,6 +4,10 @@
 
 English | [简体中文](../README.md) | [Changelog](./CHANGELOG-en_us.md)
 
+## Background
+
+When testing image-upload features, you often need many images at specific file sizes. Finding suitable files locally is inconvenient and inconsistent. This tool solves that by generating images with target sizes on demand. It can save files locally and copy images to the clipboard for a faster workflow.
+
 ## Features
 
 > For detailed parameter descriptions, please refer to [Options](#options).
@@ -49,14 +53,15 @@ npm i -g @liarcoder/image-generator
 You can also run it directly with `npx`:
 
 ```bash
-npx @liarcoder/image-generator
+# Generate a 1MB PNG, copy to clipboard, and do not save to disk
+npx @liarcoder/image-generator -s 1 -c --no-save
 ```
 
 ### From source
 
 ```bash
 # Clone and install dependencies
-git clone <repo-url>
+git clone https://github.com/LiarCoder/image-generator.git
 cd image-generator
 npm install
 
@@ -72,27 +77,44 @@ imgen -s <size> [options]
 
 ### Options
 
-| Flag                 | Alias                 | Description                                              | Default            |
-| -------------------- | --------------------- | -------------------------------------------------------- | ------------------ |
-| `-s <number>`        | `--size`              | Target file size **(required)**                          | —                  |
-| `-u <unit>`          | `--unit`              | Unit: `KB` or `MB`                                       | `MB`               |
-| `-f <type>`          | `--format`            | Output format: `png` `jpg` `webp` `bmp` `gif`            | `png`              |
-| `-n <name>`          | `--name`              | Output filename (no extension)                           | auto-generated     |
-| `-o <dir>`           | `--output`            | Output directory                                         | current directory  |
-| `-d <WxH>`           | `--dimensions`        | Pixel dimensions, e.g. `1920x1080`                       | auto-calculated    |
-| `--bg-color <hex>`   |                       | Background color, e.g. `#336699`                         | random muted color |
-| `--text-color <hex>` |                       | Text color, e.g. `#FFFFFF`                               | auto WCAG contrast |
-| `--verbose`          |                       | Show detailed progress                                   | —                  |
-| `-c`                 | `--copy-to-clipboard` | Copy generated image to system clipboard (Windows/macOS) | off                |
-| `--quiet`            |                       | Print only the output file path                          | —                  |
-| `-v`                 | `--version`           | Show version                                             | —                  |
-| `-h`                 | `--help`              | Show help                                                | —                  |
+| Flag                          | Alias               | Description                                                       | Default            |
+| ----------------------------- | ------------------- | ----------------------------------------------------------------- | ------------------ |
+| `--size <number>`             | `-s <number>`       | Target file size **(required)**                                   | —                  |
+| `--copy-to-clipboard`         | `-c`                | Copy generated image to system clipboard (Windows/macOS)          | false              |
+| `--no-save`                   |                     | Do not save to disk (must be used with `--copy-to-clipboard`)     | false              |
+| `--unit <unit>`               | `-u <unit>`         | Unit: `KB` or `MB`                                                | `MB`               |
+| `--format <type>`             | `-f <type>`         | Output format: `png` `jpg` `webp` `bmp` `gif`                     | `png`              |
+| `--name <name>`               | `-n <name>`         | Output filename (no extension)                                    | auto-generated     |
+| `--output <dir>`              | `-o <dir>`          | Output directory                                                  | current directory  |
+| `--dimensions <widthxheight>` | `-d <widthxheight>` | Pixel dimensions, e.g. `1920x1080`                                | auto-calculated    |
+| `--bg-color <hex>`            |                     | Background color, e.g. `#336699`                                  | random muted color |
+| `--text-color <hex>`          |                     | Text color, e.g. `#FFFFFF`                                        | auto WCAG contrast |
+| `--verbose`                   |                     | Show detailed progress                                            | false              |
+| `--quiet`                     |                     | Print only the output file path (cannot be used with `--verbose`) | false              |
+| `--version`                   | `-v`                | Show version                                                      | —                  |
+| `--help`                      | `-h`                | Show help                                                         | —                  |
 
-`--verbose` and `--quiet` are mutually exclusive.
+### About generating large images
 
-### Constraints
+- Maximum target size: **500 MB**
+  - This limit prevents generating oversized files that can impact system performance and disk usage.
+  - Large-image generation can take longer (around 30 iterations).
+  - Visual quality may be less predictable for very large outputs.
+  - Generation may fail if pixel limits are exceeded.
+  - For large outputs, `png` is generally recommended for a balanced runtime and stable results.
 
-- Maximum target size: **50 MB**
+Large-image test results (for reference only):
+
+| Format | Dimensions  | Max generated size            | Elapsed                              |
+| ------ | ----------- | ----------------------------- | ------------------------------------ |
+| png    | 18893x14170 | 383.00MB (`-s 383`)           | 6.9s                                 |
+| jpg    | 18623x13968 | 203.70MB (`-s 204`)           | 208.9s                               |
+| bmp    | 14807x11105 | 500.00MB (`-s 500`)           | 7.6s                                 |
+| gif    | 18869x14152 | 191.75MB (`-s 191`, 0.4% off) | 12.8s                                |
+| webp   | —           | `-s 134`                      | tuning took too long (not completed) |
+
+### Other constraints
+
 - Minimum image dimension: **100 px** on either side
 - When `-d` conflicts with the target size, **size takes priority** and dimensions are used only as a starting reference
 - Filename characters `\ / : * ? " < > |` are not allowed
@@ -108,6 +130,9 @@ imgen -s <size> [options]
 ```bash
 # 5 MB PNG (auto-calculated dimensions)
 imgen -s 5
+
+# Generate a 1MB PNG, copy to clipboard, and do not save to disk
+imgen -s 1 -c --no-save
 
 # 500 KB JPEG
 imgen -s 500 -u KB -f jpg

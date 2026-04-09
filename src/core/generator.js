@@ -5,6 +5,9 @@ import { SizeAdjuster } from './adjuster.js';
 import { OutputWriter } from './output.js';
 import { logger } from '../utils/logger.js';
 import { clipboardProcessor } from '../utils/clipboard.js';
+import { tmpdir } from 'os';
+import { writeFile, unlink } from 'fs/promises';
+import { join } from 'path';
 
 /**
  * End-to-end image generation orchestration.
@@ -72,6 +75,7 @@ export class ImageGenerator {
    *   bgColor: string|null,
    *   textColor: string|null,
    *   copyToClipboard: boolean,
+   *   save: boolean,
    * }} options
    */
   static async generate(options) {
@@ -110,14 +114,32 @@ export class ImageGenerator {
     }
 
     logger.updateSpinner('Writing file...');
-    const filePath = await OutputWriter.save(finalBuffer, options);
 
-    logger.success(filePath, finalBuffer.length, finalWidth, finalHeight);
+    if (options.save !== false) {
+      const filePath = await OutputWriter.save(finalBuffer, options);
+      logger.success(filePath, finalBuffer.length, finalWidth, finalHeight);
 
-    if (options.copyToClipboard) {
-      const copied = await clipboardProcessor.copyImageToClipboard(filePath, format);
-      if (copied) {
-        logger.info('Image copied to clipboard.');
+      if (options.copyToClipboard) {
+        const copied = await clipboardProcessor.copyImageToClipboard(filePath, format);
+        if (copied) {
+          logger.info('Image copied to clipboard.');
+        }
+      }
+    } else {
+      // --no-save: write to a temp file, copy to clipboard, then remove the temp file
+      const tmpPath = join(tmpdir(), `imgen-tmp-${Date.now()}.${format}`);
+      await writeFile(tmpPath, finalBuffer);
+      try {
+        const copied = await clipboardProcessor.copyImageToClipboard(tmpPath, format);
+        if (copied) {
+          logger.info('Image copied to clipboard (not saved to disk).');
+        } else {
+          logger.warn(
+            'Clipboard copy failed; image was not saved to disk either (no output produced).',
+          );
+        }
+      } finally {
+        await unlink(tmpPath);
       }
     }
   }

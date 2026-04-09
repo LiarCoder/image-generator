@@ -59,6 +59,23 @@ describe('CLI run', () => {
     assert.equal(r.status, 0);
     assert.ok(r.stdout.trim().length > 0);
   });
+
+  it('accepts --no-save only when paired with -c/--copy-to-clipboard', () => {
+    const r = runImgen([
+      '-s',
+      '1',
+      '-u',
+      'KB',
+      '-f',
+      'png',
+      '--no-save',
+      '-c',
+      '--quiet',
+      '-o',
+      cliTmpDir,
+    ]);
+    assert.equal(r.status, 0);
+  });
 });
 
 describe('CLI parameter errors', () => {
@@ -83,7 +100,7 @@ describe('CLI parameter errors', () => {
   });
 
   it('exits PARAM_ERROR when target exceeds max file size', () => {
-    const r = runImgen(['-s', '51', '-u', 'MB']);
+    const r = runImgen(['-s', '501', '-u', 'MB']);
     assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
   });
 
@@ -116,6 +133,12 @@ describe('CLI parameter errors', () => {
     const r = runImgen(['-s', '1', '-u', 'KB', '--verbose', '--quiet']);
     assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
   });
+
+  it('exits PARAM_ERROR when --no-save is used without -c/--copy-to-clipboard', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '-f', 'png', '--no-save']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+    assert.match(r.stderr, /--no-save.+requires.+--copy-to-clipboard/i);
+  });
 });
 
 describe('CLI validators', () => {
@@ -140,15 +163,14 @@ describe('CLI validators', () => {
       }
     });
 
-    it('rejects values over 50MB limit', () => {
-      const overLimit = 51 * 1024 * 1024;
+    it('rejects values over 500MB limit', () => {
+      const overLimit = 501 * 1024 * 1024;
       assert.ok(overLimit > MAX_FILE_SIZE_BYTES);
     });
 
-    it('accepts valid positive numbers', () => {
-      for (const v of [1, 0.5, 100, 50]) {
-        assert.ok(Number.isFinite(v) && v > 0, `${v} should be valid`);
-      }
+    it('accepts values up to the 500MB limit', () => {
+      const atLimit = 500 * 1024 * 1024;
+      assert.ok(atLimit <= MAX_FILE_SIZE_BYTES);
     });
   });
 

@@ -6,8 +6,8 @@ export const DEFAULT_FORMAT = 'png';
 export const DEFAULT_UNIT = 'MB';
 export const DEFAULT_ASPECT_RATIO = 4 / 3;
 
-/** 50 MB in bytes */
-export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+/** 500 MB in bytes */
+export const MAX_FILE_SIZE_BYTES = 500 * 1024 * 1024;
 export const MIN_DIMENSION = 100;
 
 /** Hex color: #RGB or #RRGGBB */
@@ -29,7 +29,7 @@ export const TOLERANCE = {
   },
 };
 
-export const BINARY_SEARCH_MAX_ITERATIONS = 20;
+export const BINARY_SEARCH_MAX_ITERATIONS = 30;
 
 /** Estimated compressed bytes-per-pixel for each format (used for initial size estimation) */
 export const BYTES_PER_PIXEL = {
