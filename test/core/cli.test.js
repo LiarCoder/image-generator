@@ -59,6 +59,23 @@ describe('CLI run', () => {
     assert.equal(r.status, 0);
     assert.ok(r.stdout.trim().length > 0);
   });
+
+  it('accepts --no-save only when paired with -c/--copy-to-clipboard', () => {
+    const r = runImgen([
+      '-s',
+      '1',
+      '-u',
+      'KB',
+      '-f',
+      'png',
+      '--no-save',
+      '-c',
+      '--quiet',
+      '-o',
+      cliTmpDir,
+    ]);
+    assert.equal(r.status, 0);
+  });
 });
 
 describe('CLI parameter errors', () => {
@@ -115,6 +132,12 @@ describe('CLI parameter errors', () => {
   it('exits PARAM_ERROR when --verbose and --quiet are both set', () => {
     const r = runImgen(['-s', '1', '-u', 'KB', '--verbose', '--quiet']);
     assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+  });
+
+  it('exits PARAM_ERROR when --no-save is used without -c/--copy-to-clipboard', () => {
+    const r = runImgen(['-s', '1', '-u', 'KB', '-f', 'png', '--no-save']);
+    assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
+    assert.match(r.stderr, /--no-save.+requires.+--copy-to-clipboard/i);
   });
 });
 

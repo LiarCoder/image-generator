@@ -57,6 +57,8 @@ export function run() {
     .version(pkg.version, '-v, --version', 'Show version')
     .helpOption('-h, --help', 'Show help')
     .option('-s, --size <number>', 'Target file size (positive number)')
+    .option('-c, --copy-to-clipboard', 'Copy the generated image to clipboard after saving', false)
+    .option('--no-save', 'Skip saving the image to disk (must be used with -c/--copy-to-clipboard)')
     .option('-f, --format <type>', `Image format: ${SUPPORTED_FORMATS.join(' | ')}`, DEFAULT_FORMAT)
     .option('-u, --unit <unit>', `Size unit: KB | MB`, DEFAULT_UNIT)
     .option(
@@ -77,7 +79,6 @@ export function run() {
       'Text color as hex, e.g. #FFFFFF. (default: auto WCAG contrast)',
     )
     .option('--verbose', 'Verbose output', false)
-    .option('-c, --copy-to-clipboard', 'Copy the generated image to clipboard after saving', false)
     .option('--quiet', 'Quiet mode; print only the output file path', false);
 
   program.parse(process.argv);
@@ -91,6 +92,11 @@ export function run() {
   // ── Mutually exclusive flags ─────────────────────────────────────────────
   if (opts.verbose && opts.quiet) {
     die('`--verbose` and `--quiet` cannot be used at the same time');
+  }
+
+  // ── --no-save requires -c ────────────────────────────────────────────────
+  if (!opts.save && !opts.copyToClipboard) {
+    die('`--no-save` requires `-c`/`--copy-to-clipboard`; no output path available');
   }
 
   // ── Set log mode early so subsequent errors respect it ───────────────────
@@ -153,6 +159,7 @@ export function run() {
     bgColor: opts.bgColor ?? null,
     textColor: opts.textColor ?? null,
     copyToClipboard: opts.copyToClipboard,
+    save: opts.save,
   }).catch((err) => {
     logger.error(err.message, EXIT_CODES.GENERATION_ERROR);
   });

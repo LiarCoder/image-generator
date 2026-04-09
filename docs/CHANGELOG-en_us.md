@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Increased built-in image size limit to 500MB**
   - Previous limit was 50MB, now increased to 500MB
   - Due to the increased size limit, the maximum iterations for the binary search have also been increased to 30 (previously 20)
+- **Added `--no-save` parameter**
+  - Added `--no-save` parameter: do not save the image to disk (must be used with `-c, --copy-to-clipboard`)
 
 ## [2.0.2] - 2026-04-06
 
