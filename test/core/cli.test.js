@@ -83,7 +83,7 @@ describe('CLI parameter errors', () => {
   });
 
   it('exits PARAM_ERROR when target exceeds max file size', () => {
-    const r = runImgen(['-s', '51', '-u', 'MB']);
+    const r = runImgen(['-s', '501', '-u', 'MB']);
     assert.equal(r.status, EXIT_CODES.PARAM_ERROR);
   });
 
@@ -140,15 +140,14 @@ describe('CLI validators', () => {
       }
     });
 
-    it('rejects values over 50MB limit', () => {
-      const overLimit = 51 * 1024 * 1024;
+    it('rejects values over 500MB limit', () => {
+      const overLimit = 501 * 1024 * 1024;
       assert.ok(overLimit > MAX_FILE_SIZE_BYTES);
     });
 
-    it('accepts valid positive numbers', () => {
-      for (const v of [1, 0.5, 100, 50]) {
-        assert.ok(Number.isFinite(v) && v > 0, `${v} should be valid`);
-      }
+    it('accepts values up to the 500MB limit', () => {
+      const atLimit = 500 * 1024 * 1024;
+      assert.ok(atLimit <= MAX_FILE_SIZE_BYTES);
     });
   });
 

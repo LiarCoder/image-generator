@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-04-09
+
+### Added
+
+- **内置图片体积上限上调至500MB**
+  - 原上限为50MB，现已提升至500MB
+  - 由于上调了体积上限，所以同步上调了二分搜索最大迭代层至 30 次（原先是 20 次）
+
 ## [2.0.2] - 2026-04-06
 
 ### Added

@@ -92,7 +92,7 @@ imgen -s <size> [options]
 
 ### Constraints
 
-- Maximum target size: **50 MB**
+- Maximum target size: **500 MB**
 - Minimum image dimension: **100 px** on either side
 - When `-d` conflicts with the target size, **size takes priority** and dimensions are used only as a starting reference
 - Filename characters `\ / : * ? " < > |` are not allowed
