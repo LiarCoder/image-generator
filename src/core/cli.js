@@ -125,7 +125,7 @@ export function run() {
   }
 
   const unitScale = unit === 'MB' ? MB_TO_BYTES : KB_TO_BYTES;
-  const targetBytes = sizeNum * unitScale;
+  const targetBytes = Math.floor(sizeNum * unitScale);
   if (targetBytes > MAX_FILE_SIZE_BYTES) {
     const limit = MAX_FILE_SIZE_BYTES / MB_TO_BYTES;
     die(`Target size ${sizeNum}${unit} exceeds the maximum limit of ${limit}MB`);
