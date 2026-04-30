@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.1] - 2026-04-30
+
+### Fixed
+
+- **Fixed error with decimal MB sizes**
+  - Fixed "offset" out of range error when using decimal MB sizes (e.g., `-s 0.05`) due to `targetBytes` being a floating-point number
+  - Convert `targetBytes` to an integer in the CLI to prevent buffer allocation issues
+
 ## [2.1.0] - 2026-04-09
 
 ### Added

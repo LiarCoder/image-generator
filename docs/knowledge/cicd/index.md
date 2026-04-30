@@ -7,11 +7,11 @@
 ## 方案与问题清单
 
 1. [主线方案：main 合并后自动发布 npm](./01-main-merge-auto-publish-plan.md)
-2. [问题：`npm publish` 报 `EOTP](./02-npm-eotp.md)`
+2. [问题：`npm publish` 报 `EOTP`](./02-npm-eotp.md)
 3. [方案升级：切换 Trusted Publishing (OIDC)](./03-trusted-publishing-oidc.md)
-4. [问题：CI 中 `node --test` 报 `Cannot find module .../test](./04-node-test-cannot-find-module-test.md)`
+4. [问题：CI 中 `node --test` 报 `Cannot find module .../test`](./04-node-test-cannot-find-module-test.md)
 5. [问题：Husky 提示 `husky.sh` 将在 v10 失效](./05-husky-deprecated-husky-sh.md)
-6. [问题：OIDC 发布报 `ENEEDAUTH](./06-oidc-eneedauth.md)`
+6. [问题：OIDC 发布报 `ENEEDAUTH`](./06-oidc-eneedauth.md)
 7. [方案重构：Release 独立为 tag 驱动工作流](./07-release-by-tag-workflow.md)
 8. [问题：旧 tag 下缺少 `extract-changelog.mjs` 导致 Release 失败](./08-release-missing-extractor.md)
 9. [问题：Release 列表顺序与语义化版本不一致](./09-release-order-vs-latest.md)
